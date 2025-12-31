@@ -9,6 +9,10 @@ venv/
 # Streamlit
 .streamlit/
 
-# OS
-.DS_Store
-Thumbs.db
+# Build artifacts (VERY IMPORTANT)
+build/
+dist/
+*.spec
+
+# Testing / experiments
+testing python file/

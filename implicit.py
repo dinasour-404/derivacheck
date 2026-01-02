@@ -4,7 +4,7 @@ from sympy import diff, symbols, simplify, Function, solve
 # Function : creates symbolic functions (e.g. y(x))
 # simplify : simplifies algebraic expressions
 
-x = symbols('x')
+x = symbols('x', real=True)
 # Independent variable
 
 y = Function('y')(x)

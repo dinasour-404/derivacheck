@@ -31,7 +31,7 @@ if "waiting_for_power" not in st.session_state:
 
 
 # ---------------- TITLE ---------------- #
-st.title("MathGuard – Differentiation Step Checker")
+st.title("MathGuard – Diffeentiation Step Checker")
 st.write("Type your working steps. Use the math keyboard below for symbols.")
 st.divider()
 

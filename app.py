@@ -356,11 +356,7 @@ if st.button("✅ Check Steps"):
     if mode == "Parametric":
         # Combine x(t) and y(t) into one string for backend
         latex_function_str = f"x(t)={latex_function['x']}; y(t)={latex_function['y']}"
-        results = check_derivative_steps(
-            latex_steps,
-            latex_function_str,
-            mode=mode
-        )
+        check_derivative_steps(original_function, student_steps, mode=mode)
     else:
         results = check_derivative_steps(
             latex_steps,

@@ -1,6 +1,16 @@
 from sympy import diff, symbols, simplify
+# diff     : differentiation function
+# symbols  : creates symbolic variables
+# Function : creates symbolic functions (e.g. y(x))
+# simplify : simplifies algebraic expressions
 
-x, y = symbols('x y')
+x = symbols('x')
+# Independent variable
+
+y = Function('y')(x)
+# Declare y as a function of x (y = y(x))
+# This is CRITICAL for implicit differentiation
+# Now SymPy knows dy/dx ≠ 0 and applies the chain rule
 
 def implicit_derivative(lhs, rhs):
     """
@@ -19,12 +29,21 @@ def implicit_derivative(lhs, rhs):
         dy/dx
     """
     expr = lhs - rhs
-    # Move all trhs
+    # Move everything to one side:
+    # lhs = rhs  →  lhs - rhs = 0
 
-    # Compute derivative w.r.t x
-    dx = diff(expr, x)
-    dy = diff(expr, y)
+    d_expr = diff(expr, x)
+    # Differentiate the entire expression with respect to x
+    # Because y = y(x), SymPy automatically applies:
+    # d/dx(y) = dy/dx
 
-    # Solve for dy/dx
-    dydx = simplify(-dx / dy)
+    dydx = simplify(
+        d_expr.solve(diff(y, x))[0]
+    )
+    # Solve the differentiated equation for dy/dx
+    # diff(y, x) explicitly represents dy/dx
+    # solve(...) returns a list → take the first solution
+    # simplify the final expression for cleanliness
+
     return dydx
+    # Return dy/dx as a symbolic expression

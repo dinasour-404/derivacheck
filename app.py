@@ -12,23 +12,21 @@ st.set_page_config(page_title="DerivaCheck", page_icon = " ", layout="wide")
 # ---------------- SESSION STATE ---------------- #
 #st.session_state prevents the already written input from being erased when the coding need to rerun from the top
 #referred to google docs for further explaination!
-if "history" not in st.session_state:
-    st.session_state.history = []  
+defaults = {
+    "history": [],
+    "original_function": "",
+    "student_steps": "",
+    "active_box": "Function",
+    "waiting_for_power": False,
+    "power_buffer": "",
+    "diff_mode": "Normal",
+    "x_t": "",
+    "y_t": ""
+}
 
-if "original_function" not in st.session_state:
-    st.session_state.original_function = ""
-
-
-if "student_steps" not in st.session_state:
-    st.session_state.student_steps = ""
-
-
-if "active_box" not in st.session_state:
-    st.session_state.active_box = "Function"
-
-if "waiting_for_power" not in st.session_state:
-    st.session_state.waiting_for_power = False
-
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
 # ---------------- TITLE ---------------- #
 st.title("MathGuard – Differentiation Step Checker")

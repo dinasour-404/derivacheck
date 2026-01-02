@@ -105,12 +105,12 @@ st.session_state.student_steps = st.text_area(
 st.markdown("### 🔢 Math Keyboard")
 
 keyboard = [
-    [None, None, None, None, None, None,None,"⌫","Clear"],
+    [None, None, None, None, None, None,None,"⌫","Clear",],
     # Numbers + add/subtract + powers
-    ["7", "8", "9", "＋", "−", None, "a²", "aᵇ", "x"],
+    ["7", "8", "9", "＋", "−", None, "a²", "aᵇ", "x","t"],
 
     # Numbers + multiply/divide + brackets + y
-    ["4", "5", "6", "×", "÷", None, "(", ")", "y"],
+    ["4", "5", "6", "×", "÷", None, "(", ")", "y",],
 
     # Numbers + constants + trig
     ["1", "2", "3", ".", "π", None, "sin(", "cos(", "tan("],
@@ -351,18 +351,26 @@ if st.button("✅ Check Steps"):
             "steps": st.session_state.student_steps
         })
 
-    # ---------- BACKEND CALL ----------
-    # For parametric mode, ensure backend receives a compatible string
-    if mode == "Parametric":
-        # Combine x(t) and y(t) into one string for backend
-        latex_function_str = f"x(t)={latex_function['x']}; y(t)={latex_function['y']}"
-        check_derivative_steps(original_function, student_steps, mode=mode)
-    else:
-        results = check_derivative_steps(
-            latex_steps,
-            latex_function,
-            mode=mode
-        )
+   # ---------- BACKEND CALL ----------
+if mode == "Parametric":
+    # Send x(t) and y(t) separately to backend
+    x_expr = latex_function['x']
+    y_expr = latex_function['y']
+
+    results = check_derivative_steps(
+        latex_steps,
+        x_expr,
+        y_expr,
+        mode=mode
+    )
+else:
+    # Normal or Implicit mode
+    results = check_derivative_steps(
+        latex_steps,
+        latex_function,
+        mode=mode
+    )
+
 
     # ---------- PREVIEW ----------
     st.markdown("### 👀 Math Preview")

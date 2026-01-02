@@ -1,4 +1,4 @@
-from sympy import diff, symbols, simplify
+from sympy import diff, symbols, simplify, Function, solve
 # diff     : differentiation function
 # symbols  : creates symbolic variables
 # Function : creates symbolic functions (e.g. y(x))
@@ -37,13 +37,11 @@ def implicit_derivative(lhs, rhs):
     # Because y = y(x), SymPy automatically applies:
     # d/dx(y) = dy/dx
 
-    dydx = simplify(
-        d_expr.solve(diff(y, x))[0]
-    )
+    dydx = solve(d_expr, diff(y, x))[0]
     # Solve the differentiated equation for dy/dx
     # diff(y, x) explicitly represents dy/dx
     # solve(...) returns a list → take the first solution
     # simplify the final expression for cleanliness
 
-    return dydx
+    return simplify(dydx)
     # Return dy/dx as a symbolic expression

@@ -105,19 +105,18 @@ st.session_state.student_steps = st.text_area(
 st.markdown("### 🔢 Math Keyboard")
 
 keyboard = [
-    [None, None, None, None, None, None, None, "⌫", "Clear", None],
-
+    [None, None, None, None, None, None,None,"⌫","Clear",],
     # Numbers + add/subtract + powers
-    ["7", "8", "9", "＋", "−", None, "a²", "aᵇ", "x", "t"],
+    ["7", "8", "9", "＋", "−", None, "a²", "aᵇ", "x","t"],
 
     # Numbers + multiply/divide + brackets + y
-    ["4", "5", "6", "×", "÷", None, "(", ")", "y", None],
+    ["4", "5", "6", "×", "÷", None, "(", ")", "y",],
 
     # Numbers + constants + trig
-    ["1", "2", "3", ".", "π", None, "sin(", "cos(", "tan(", None],
+    ["1", "2", "3", ".", "π", None, "sin(", "cos(", "tan("],
 
     # Zero + calculus + actions
-    ["0", "d/dx", "dy/dx", "sqrt(", "=", None, "sec(", "ln(", "exp(", None]
+    ["0", "d/dx", "dy/dx","sqrt(", "=", None, "sec(", "ln(", "exp("]
 ]
 
     

@@ -323,7 +323,7 @@ def ui_to_latex(expr):
 
 
 
-# ---------------- CHECK BUTTON ---------------- #
+# ---------------- CHECK BUTTON ----------------
 st.divider()
 
 if st.button("✅ Check Steps"):
@@ -349,9 +349,7 @@ if st.button("✅ Check Steps"):
     latex_steps = ui_to_latex(st.session_state.student_steps.replace("",""))
 
     if mode in ["Normal", "Implicit"]:
-        latex_function = ui_to_latex(
-            st.session_state.original_function.replace(" ", "")
-        )
+        latex_function = ui_to_latex(st.session_state.original_function.replace(" ", ""))
     else:  # Parametric
         latex_function = {
             "x": ui_to_latex(st.session_state.x_t.replace(" ", "")),
@@ -373,26 +371,23 @@ if st.button("✅ Check Steps"):
             "steps": st.session_state.student_steps
         })
 
-   # ---------- BACKEND CALL ----------
-if mode == "Parametric":
-    # Send x(t) and y(t) separately to backend
-    x_expr = latex_function['x']
-    y_expr = latex_function['y']
+    # ---------- BACKEND CALL ----------
+    if mode == "Parametric":
+        x_expr = latex_function['x']
+        y_expr = latex_function['y']
 
-    results = check_derivative_steps(
-        latex_steps,
-        x_expr,
-        y_expr,
-        mode=mode
-    )
-else:
-    # Normal or Implicit mode
-    results = check_derivative_steps(
-        latex_steps,
-        latex_function,
-        mode=mode
-    )
-
+        results = check_derivative_steps(
+            latex_steps,
+            x_expr,
+            y_expr,
+            mode=mode
+        )
+    else:
+        results = check_derivative_steps(
+            latex_steps,
+            latex_function,
+            mode=mode
+        )
 
     # ---------- PREVIEW ----------
     st.markdown("### 👀 Math Preview")
@@ -407,7 +402,6 @@ else:
     st.markdown("## 📋 Feedback")
     for msg in results:
         if "Correction:" in msg:
-            # Fix issue 5: only split once
             text, correction = msg.split("Correction:", 1)
             st.write(text.strip())
             st.latex(correction.strip())
@@ -418,7 +412,7 @@ else:
 st.sidebar.markdown("### 🕘 History")
 
 if st.session_state.history:
-    # show last 10 entries
+    # Show last 10 entries (newest first)
     for i, item in enumerate(reversed(st.session_state.history[-10:]), 1):
         st.sidebar.markdown(f"**{i}. Mode:** {item['mode']}")
 

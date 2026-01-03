@@ -324,7 +324,7 @@ if st.button("✅ Check Steps"):
         st.stop()
 
     # ---------- UI → LaTeX CONVERSION ----------
-    latex_steps = ui_to_latex(st.session_state.student_steps.replace(" ", ""))
+    latex_steps = ui_to_latex(st.session_state.student_steps.replace("",""))
 
     if mode in ["Normal", "Implicit"]:
         latex_function = ui_to_latex(

@@ -37,7 +37,7 @@ if "y_t" not in st.session_state:
 
 
 # ---------------- TITLE ---------------- #
-st.title("🧮 MathGuard – Differentiation Step Checker")
+st.title("🧮 DerivaCheck – Differentiation Step Checker")
 
 # ✅ STEP 2: Mode selector goes here
 st.markdown("### ⚙️ Differentiation Type")

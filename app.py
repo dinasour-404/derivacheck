@@ -209,7 +209,7 @@ def clear_box():
 
 # ---------------- Render Keyboard ----------------
 
-#r# Mode-aware keyboard rules
+# Mode-aware keyboard rules
 mode = st.session_state.diff_mode
 
 keyboard_rules = {
@@ -222,38 +222,59 @@ rules = keyboard_rules.get(mode, {})
 disable_keys = rules.get("disable", [])
 highlight_keys = rules.get("highlight", [])
 
-# Render keyboard
+# ---------------- Render each row of the keyboard ----------------
 for row_index, row in enumerate(keyboard):
-    cols = st.columns(len(row))
+    cols = st.columns(len(row))  # Create a column for each key in the row
+
     for col_index, key in enumerate(row):
 
-        # Gap between groups
+        # ---------------- Handle gaps ----------------
         if key is None:
-            cols[col_index].markdown("&nbsp;")
+            cols[col_index].markdown("&nbsp;")  # invisible spacer
             continue
 
-        # Unique key for Streamlit button to prevent fast-click issues
+        # ---------------- Unique button key ----------------
+        # Important for Streamlit to prevent fast-click / duplicate key issues
         button_key = f"{key}_{row_index}_{col_index}"
 
-        # Determine if button should be disabled or highlighted
         is_disabled = key in disable_keys
         is_highlighted = key in highlight_keys
 
-        # Attach appropriate callback
-        if key == "⌫":
-            cols[col_index].button(key, key=button_key, use_container_width=True, on_click=delete_key)
-        elif key == "Clear":
-            cols[col_index].button(key, key=button_key, use_container_width=True, on_click=clear_box)
-        else:
-            cols[col_index].button(
-                key,
-                key=button_key,
-                use_container_width=True,
-                disabled=is_disabled,
-                help="Recommended for this method" if is_highlighted else None,
-                on_click=add_key,
-                args=(key,)
-            )
+        # ---------------- CSS styling ----------------
+        # Only row_index == 1 (second row) gets smaller buttons
+        css_class = "small-row" if row_index == 1 else "math-btn"
+
+        # ---------------- Render button ----------------
+        with cols[col_index]:
+            st.markdown(f'<div class="{css_class}">', unsafe_allow_html=True)
+
+            if key == "⌫":
+                st.button(
+                    key,
+                    key=button_key,
+                    use_container_width=True,
+                    on_click=delete_key
+                )
+            elif key == "Clear":
+                st.button(
+                    key,
+                    key=button_key,
+                    use_container_width=True,
+                    on_click=clear_box
+                )
+            else:
+                st.button(
+                    key,
+                    key=button_key,
+                    use_container_width=True,
+                    disabled=is_disabled,
+                    help="Recommended for this method" if is_highlighted else None,
+                    on_click=add_key,
+                    args=(key,)
+                )
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ---------- Frontend: Unicode superscript → LaTeX ----------
 

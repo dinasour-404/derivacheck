@@ -80,7 +80,27 @@ if st.session_state.mode in ["Normal", "Implicit"]:
     st.text_input(
         "Enter Function / Equation:",
         key="func",
-        placeholder=placeholders.get()
+        placeholder=placeholders.get("func", "")
+    )
+else:
+    st.info("💡 In parametric differentiation, you need both dx/dt and dy/dt. Enter them step by step!")
+    st.text_input(
+        "x(t) =",
+        key="x_t",
+        placeholder=placeholders.get("x_t", "")
+    )
+    st.text_input(
+        "y(t) =",
+        key="y_t",
+        placeholder=placeholders.get("y_t", "")
+    )
+
+st.text_area(
+    "Working steps (one per line):",
+    key="steps",
+    height=160,
+    placeholder=placeholders.get("steps", "")
+)
 
 # ----------------- KEYBOARD ----------------- #
 st.markdown("### 🔢 Math Keyboard")

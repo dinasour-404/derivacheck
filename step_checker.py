@@ -1,3 +1,10 @@
+from sympy import symbols, diff, simplify
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+import sympy as sp
+import streamlit as st
+
+x, y, t = symbols('x y t')
+
 # ----------------- UTILITY ----------------- #
 def parse_expr_safe(expr):
     if isinstance(expr, str):

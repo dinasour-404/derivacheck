@@ -309,6 +309,56 @@ if st.button("✅ Check Steps"):
 
     # Feedback
     st.markdown("## 📋 Feedback")
+    expected_steps = []
+
+    if st.session_state.mode == "Parametric":
+        t = sp.symbols('t')
+        x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
+        y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
+
+        dx_dt = sp.diff(x_expr, t)
+        dy_dt = sp.diff(y_expr, t)
+        dy_dx = sp.simplify(dy_dt / dx_dt)
+
+        expected_steps = [
+            {"label": "dx/dt", "expr": dx_dt, "display": r"\frac{dx}{dt} = " + sp.latex(dx_dt)},
+            {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
+            {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
+        ]
+
+    elif st.session_state.mode == "Implicit":
+        # Parse and symbol setup
+        x, y = sp.symbols('x y')
+        func_str = st.session_state.func
+        lhs_str, rhs_str = func_str.split("=", 1)
+        lhs_expr = parse_expr_safe(to_backend(lhs_str.strip()))
+        rhs_expr = parse_expr_safe(to_backend(rhs_str.strip()))
+
+        d_lhs = sp.diff(lhs_expr, x) + sp.diff(lhs_expr, y) * sp.Symbol('dy/dx')  # generalized implicit
+        d_rhs = sp.diff(rhs_expr, x) + sp.diff(rhs_expr, y) * sp.Symbol('dy/dx')
+
+        # Solve for dy/dx if possible
+        dy_dx = sp.simplify(sp.solve(sp.Eq(d_lhs, d_rhs), sp.Symbol('dy/dx'))[0]) if sp.Symbol('dy/dx') in sp.solve(sp.Eq(d_lhs, d_rhs), sp.Symbol('dy/dx'), dict=True)[0] else None
+
+        expected_steps = [
+            {"label": "d/dx(lhs)", "expr": d_lhs, "display": r"\frac{d}{dx}(\text{LHS}) = " + sp.latex(d_lhs)},
+            {"label": "d/dx(rhs)", "expr": d_rhs, "display": r"\frac{d}{dx}(\text{RHS}) = " + sp.latex(d_rhs)},
+        ]
+        if dy_dx is not None:
+            expected_steps.append({"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)})
+
+    else:  # Normal
+        x = sp.symbols('x')
+        func_expr = parse_expr_safe(to_backend(st.session_state.func))
+        dfx = sp.simplify(sp.diff(func_expr, x))
+        expected_steps = [
+          {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
+        ]
+
+    # Add completeness feedback
+    completeness_feedback = analyze_steps(steps_lines, expected_steps)
+    results = completeness_feedback + results
+
     for msg in results:
         if "Correction:" in msg:
             user_input, correct = msg.split("Correction:",1)
@@ -316,7 +366,7 @@ if st.button("✅ Check Steps"):
             st.markdown("**Correct Answer:**"); st.latex(to_latex(correct.strip()))
         else:
             st.write(msg)
-        
+
     st.markdown("### 🔮 Auto-computed reference")
     for e in expected_steps:
         st.latex(e["display"])

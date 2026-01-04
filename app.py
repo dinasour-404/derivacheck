@@ -64,7 +64,7 @@ if st.session_state.mode == "Parametric":
         ["sqrt(","⌫","Clear"]
     ]
     right_keys = [
-        ["a²","aᵇ","x","t",None],   # include t here
+        ["aᵇ","x","t",None],   # include t here
         ["("," )","y",None,None],
         ["sin(","cos(","tan(",None,None],
         ["sec(","ln(","exp(",None,None]

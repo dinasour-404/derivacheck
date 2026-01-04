@@ -10,12 +10,23 @@ set_background("images/background.jpg")
 # 🎨 UI STYLE FIX (CSS section)
 st.markdown("""
 <style>
-.stButton > button {
-    color: black !important;
+/* Force ALL Streamlit button text to be visible */
+.stButton button,
+.stButton button span,
+.stButton button div {
+    color: #000000 !important;
     font-weight: 700 !important;
+    opacity: 1 !important;
+    text-shadow: 0 0 1px #000000 !important;
+}
+
+/* Ensure button background is not transparent */
+.stButton button {
+    background-color: rgba(255, 255, 255, 0.9) !important;
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # ----------------- PAGE CONFIG ----------------- #

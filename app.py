@@ -7,28 +7,6 @@ from user_interface import apply_pink_theme, render_math_keyboard,set_background
 apply_pink_theme()
 set_background("images/background.jpg")
 
-# 🎨 UI STYLE FIX (CSS section)
-st.markdown("""
-<style>
-/* Force ALL Streamlit button text to be visible */
-.stButton button,
-.stButton button span,
-.stButton button div {
-    color: #000000 !important;
-    font-weight: 700 !important;
-    opacity: 1 !important;
-    text-shadow: 0 0 1px #000000 !important;
-}
-
-/* Ensure button background is not transparent */
-.stButton button {
-    background-color: rgba(255, 255, 255, 0.9) !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
 # ----------------- PAGE CONFIG ----------------- #
 st.set_page_config(page_title="DerivaCheck", layout="wide")
 st.markdown('<div class="title-box">🧮 DerivaCheck – Differentiation Step Checker</div>', unsafe_allow_html=True)

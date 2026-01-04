@@ -49,14 +49,39 @@ st.radio(
 )
 
 # ----------------- INPUT BOXES ----------------- #
-if st.session_state.mode in ["Normal", "Implicit"]:
-    st.text_input("Enter Function / Equation:", key="func", placeholder="Example: 2x³ + 3x")
-else:
-    st.info("💡 In parametric differentiation, you need both dx/dt and dy/dt. Enter them step by step!")
-    st.text_input("x(t) =", key="x_t", placeholder="Example: t²")
-    st.text_input("y(t) =", key="y_t", placeholder="Example: t³")
+# ----------------- INPUT BOXES ----------------- #
 
-st.text_area("Working steps (one per line):", key="steps", height=160)
+# Helper to provide placeholders based on mode
+def get_placeholders():
+    mode = st.session_state.mode
+
+    if mode == "Normal":
+        return {
+            "func": "Example: 2x³ + 3x",
+            "steps": "Example:\n1) d/dx (2x³ + 3x)\n2) 6x² + 3"
+        }
+
+    if mode == "Implicit":
+        return {
+            "func": "Example: x² + y² = 25",
+            "steps": "Example:\n1) Differentiate both sides w.r.t x\n2) 2x + 2y dy/dx = 0"
+        }
+
+    # Parametric
+    return {
+        "x_t": "Example: t²",
+        "y_t": "Example: t³",
+        "steps": "Example:\n1) dx/dt = 2t\n2) dy/dt = 3t²\n3) dy/dx = (dy/dt)/(dx/dt)"
+    }
+
+# Get current placeholders
+placeholders = get_placeholders()
+
+if st.session_state.mode in ["Normal", "Implicit"]:
+    st.text_input(
+        "Enter Function / Equation:",
+        key="func",
+        placeholder=placeholders.get(
 
 # ----------------- KEYBOARD ----------------- #
 st.markdown("### 🔢 Math Keyboard")

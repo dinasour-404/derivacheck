@@ -71,7 +71,7 @@ if st.session_state.mode == "Parametric":
     ]
 else:  # Normal or Implicit
     left_keys = [
-        ["1","2","3","+","−"],
+        ["7","8","9","＋","−"],
         ["4","5","6","×","÷"],
         ["7","8","9",".","π"],
         ["0","d/dx","dy/dx","sqrt(","="],

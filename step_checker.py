@@ -4,11 +4,12 @@ import sympy as sp
 import streamlit as st
 
 x, y, t = symbols('x y t')
+dy_dx = symbols('dy_dx')
 
 # ----------------- UTILITY ----------------- #
 def parse_expr_safe(expr):
     if isinstance(expr, str):
-        # Replace all superscript digits with Python power notation
+        # Replace superscripts
         superscripts = {
             "⁰": "**0", "¹": "**1", "²": "**2", "³": "**3", "⁴": "**4",
             "⁵": "**5", "⁶": "**6", "⁷": "**7", "⁸": "**8", "⁹": "**9"
@@ -19,9 +20,15 @@ def parse_expr_safe(expr):
         # Replace math symbols
         expr = expr.replace("−","-").replace("×","*").replace("÷","/")
 
-        # Use SymPy parser with implicit multiplication
+        # Fix caret and ln
+        expr = expr.replace("^","**").replace("ln","log")
+
+        # Map dy/dx to dy_dx
+        expr = expr.replace("dy/dx", "dy_dx")
+
         transformations = (standard_transformations + (implicit_multiplication_application,))
-        expr = parse_expr(expr, transformations=transformations)
+        expr = parse_expr(expr, transformations=transformations,
+                          local_dict={"x":x,"y":y,"t":t,"dy_dx":dy_dx})
     return expr
 
 # ----------------- PARAMETRIC ----------------- #

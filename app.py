@@ -7,6 +7,17 @@ from user_interface import apply_pink_theme, render_math_keyboard,set_background
 apply_pink_theme()
 set_background("images/background.jpg")
 
+# 🎨 UI STYLE FIX (CSS section)
+st.markdown("""
+<style>
+.stButton > button {
+    color: black !important;
+    font-weight: 700 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 # ----------------- PAGE CONFIG ----------------- #
 st.set_page_config(page_title="DerivaCheck", layout="wide")
 st.markdown('<div class="title-box">🧮 DerivaCheck – Differentiation Step Checker</div>', unsafe_allow_html=True)

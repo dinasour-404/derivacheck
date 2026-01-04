@@ -316,7 +316,12 @@ if st.button("✅ Check Steps"):
             st.markdown("**Correct Answer:**"); st.latex(to_latex(correct.strip()))
         else:
             st.write(msg)
+        
+    st.markdown("### 🔮 Auto-computed reference")
+        for e in expected_steps:
+            st.latex(e["display"])
 
+    
     # Save history (unchanged)
     st.session_state.history.append({
         "mode": st.session_state.mode,

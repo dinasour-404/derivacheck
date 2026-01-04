@@ -57,7 +57,7 @@ st.markdown("### 🔢 Math Keyboard")
 
 if st.session_state.mode == "Parametric":
     left_keys = [
-        ["2","2","3","+","−"],
+        ["1","2","3","⁺","−"],
         ["4","5","6","×","÷"],
         ["7","8","9",".","π"],
         ["0","dx/dt","dy/dt","dy/dx","="],
@@ -71,7 +71,7 @@ if st.session_state.mode == "Parametric":
     ]
 else:  # Normal or Implicit
     left_keys = [
-        ["7","8","9","＋","−"],
+        ["1","2","3","⁺","−"],
         ["4","5","6","×","÷"],
         ["7","8","9",".","π"],
         ["0","d/dx","dy/dx","sqrt(","="],

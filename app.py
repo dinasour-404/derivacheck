@@ -1,10 +1,15 @@
 import streamlit as st
 import re
 from step_checker import check_derivative_steps, parse_expr_safe
+from user_interface import apply_pink_theme, render_math_keyboard,set_background
+
+# Apply theme at the start 
+apply_pink_theme()
+set_background("images/background.jpg")
 
 # ----------------- PAGE CONFIG ----------------- #
-st.set_page_config(page_title="DerivaCheck", layout="centered")
-st.title("🧮 DerivaCheck – Differentiation Step Checker")
+st.set_page_config(page_title="DerivaCheck", layout="wide")
+st.markdown('<div class="title-box">🧮 DerivaCheck – Differentiation Step Checker</div>', unsafe_allow_html=True)
 
 # ----------------- SESSION STATE ----------------- #
 defaults = {
@@ -47,6 +52,7 @@ st.radio(
 if st.session_state.mode in ["Normal", "Implicit"]:
     st.text_input("Enter Function / Equation:", key="func", placeholder="Example: 2x³ + 3x")
 else:
+    st.info("💡 In parametric differentiation, you need both dx/dt and dy/dt. Enter them step by step!")
     st.text_input("x(t) =", key="x_t", placeholder="Example: t²")
     st.text_input("y(t) =", key="y_t", placeholder="Example: t³")
 
@@ -57,7 +63,7 @@ st.markdown("### 🔢 Math Keyboard")
 
 if st.session_state.mode == "Parametric":
     left_keys = [
-        ["1","2","3","⁺","−"],
+        ["1","2","3","+","−"],
         ["4","5","6","×","÷"],
         ["7","8","9",".","π"],
         ["0","dx/dt","dy/dt","dy/dx","="],
@@ -71,7 +77,7 @@ if st.session_state.mode == "Parametric":
     ]
 else:  # Normal or Implicit
     left_keys = [
-        ["1","2","3","⁺","−"],
+        ["1","2","3","+","−"],
         ["4","5","6","×","÷"],
         ["7","8","9",".","π"],
         ["0","d/dx","dy/dx","sqrt(","="],

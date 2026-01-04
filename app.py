@@ -49,7 +49,6 @@ st.radio(
 )
 
 # ----------------- INPUT BOXES ----------------- #
-# ----------------- INPUT BOXES ----------------- #
 
 # Helper to provide placeholders based on mode
 def get_placeholders():
@@ -81,7 +80,7 @@ if st.session_state.mode in ["Normal", "Implicit"]:
     st.text_input(
         "Enter Function / Equation:",
         key="func",
-        placeholder=placeholders.get(
+        placeholder=placeholders.get()
 
 # ----------------- KEYBOARD ----------------- #
 st.markdown("### 🔢 Math Keyboard")

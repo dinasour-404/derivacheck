@@ -1,7 +1,7 @@
 import streamlit as st
 import sympy as sp
 import re
-from step_checker import check_derivative_steps, parse_expr_safe
+from step_checker import check_derivative_steps, parse_expr_safe, analyze_steps
 from user_interface import apply_pink_theme, render_math_keyboard,set_background
 
 # Apply theme at the start 

@@ -1,18 +1,29 @@
-# preprocessor.py
+from sympy import simplify, sympify
 
-from latex2sympy2 import latex2sympy
-from sympy import simplify
+def replace_superscripts(expr_str):
+    """Convert superscript characters to ** exponent format for sympy."""
+    sup_map = {
+        "⁰": "0", "¹": "1", "²": "2", "³": "3",
+        "⁴": "4", "⁵": "5", "⁶": "6",
+        "⁷": "7", "⁸": "8", "⁹": "9"
+    }
+    result = ""
+    for c in expr_str:
+        if c in sup_map:
+            result += "**" + sup_map[c]
+        else:
+            result += c
+    return result
 
 def preprocess_input(input_text):
     """
-    Convert user LaTeX input into a SymPy expression.
-    Strips whitespace, parses LaTeX, and simplifies it.
+    Convert user input into a SymPy expression.
+    Handles superscripts and simplifies the result.
     """
     input_text = input_text.strip()
     try:
-        expr = latex2sympy(input_text)
-        expr = simplify(expr)
-        return expr
+        input_text = replace_superscripts(input_text)
+        expr = sympify(input_text)
+        return simplify(expr)
     except Exception as e:
-        # Return error message instead of crashing
         return f"Error parsing input: {e}"

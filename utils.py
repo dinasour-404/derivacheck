@@ -1,34 +1,10 @@
 from sympy import simplify
 
+# ---------------- UTILITY FUNCTIONS ---------------- #
 def normalize(expr):
-    """
-    Simplifies the expression for consistent comparison.
-    
-    Parameters
-    ----------
-    expr : sympy expression
-        The expression to simplify
-
-    Returns
-    -------
-    sympy expression
-        Simplified version
-    """
+    """Simplify expression for consistent comparison."""
     return simplify(expr)
 
-
 def equivalent(expr1, expr2):
-    """
-    Checks if two SymPy expressions are mathematically equivalent.
-    
-    Parameters
-    ----------
-    expr1, expr2 : sympy expressions
-        Expressions to compare
-
-    Returns
-    -------
-    bool
-        True if mathematically equivalent, False otherwise
-    """
+    """Check if two expressions are mathematically equivalent."""
     return simplify(expr1 - expr2) == 0

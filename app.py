@@ -1,317 +1,271 @@
-import streamlit as st #streamlit was shortform to be used as st
+import streamlit as st
+import re
+from step_checker import check_derivative_steps, parse_expr_safe
 
-#take other functions from other files
-from preprocessor import preprocess_input 
-from step_checker import check_derivative_steps
-from sympy import latex, simplify
+# ----------------- PAGE CONFIG ----------------- #
+st.set_page_config(page_title="DerivaCheck", layout="centered")
+st.title("🧮 DerivaCheck – Differentiation Step Checker")
 
-#set_page_config is the page name
-st.set_page_config(page_title="DerivaCheck", page_icon = " ", layout="wide")
-
-
-# ---------------- SESSION STATE ---------------- #
-#st.session_state prevents the already written input from being erased when the coding need to rerun from the top
-#referred to google docs for further explaination!
-if "history" not in st.session_state:
-    st.session_state.history = []  
-
-if "original_function" not in st.session_state:
-    st.session_state.original_function = ""
-
-
-if "student_steps" not in st.session_state:
-    st.session_state.student_steps = ""
-
-
-if "active_box" not in st.session_state:
-    st.session_state.active_box = "Function"
-
-if "waiting_for_power" not in st.session_state:
-    st.session_state.waiting_for_power = False
-
-
-# ---------------- TITLE ---------------- #
-st.title("MathGuard – Differentiation Step Checker")
-st.write("Type your working steps. Use the math keyboard below for symbols.")
-st.divider()
-
-
-# ---------------- ACTIVE INPUT SELECTOR ---------------- #
-st.markdown("### Select which box the math keyboard types into:")
-
-# Radio button updates active_box, keep session state consistent
-selected_box = st.radio(
-    "Active input box:",
-    ["Function", "Steps"],
-    horizontal=True,
-    index=0 if st.session_state.active_box == "Function" else 1
-)
-
-
-# Update session state only if selection changed
-st.session_state.active_box = selected_box
-
-
-# ---------------- INPUT BOXES ---------------- #
-st.session_state.original_function = st.text_input(
-    "Enter the original function f(x):",
-    value=st.session_state.original_function,
-    placeholder="Example: x^3+4*x+2 or x³+4x+2"
-)
-
-
-st.session_state.student_steps = st.text_area(
-    "Enter your working steps (one step per line):",
-    value=st.session_state.student_steps,
-    height=160,
-    placeholder="Example: 3*x^2 + 4"
-)
-
-
-# ---------------- MATH KEYBOARD ---------------- #
-st.markdown("### Math Keyboard")
-keys = [
-    [None, None, None, None, None, None, None, "⌫", "Clear"],
-    ["7", "8", "9", "＋", "−", None, "a²", "aᵇ", "x"],
-    ["4", "5", "6", "×", "÷", None, "(", ")", "y"],
-    ["1", "2", "3", ".", "π", None, "sin(", "cos(", "tan("],
-    ["0", "d/dx", "dy/dx", "sqrt(", "=", None, "sec(", "ln(", "exp("]
-]
-
-
-# ---------------- Callback Functions ----------------
-
-superscript_digits = {
-    "0": "⁰", "1": "¹", "2": "²", "3": "³",
-    "4": "⁴", "5": "⁵", "6": "⁶",
-    "7": "⁷", "8": "⁸", "9": "⁹"
+# ----------------- SESSION STATE ----------------- #
+defaults = {
+    "mode": "Normal",
+    "active_box": "Function",
+    "func": "",
+    "x_t": "",
+    "y_t": "",
+    "steps": "",
+    "history": [],
+    "waiting_power": False,
+    "power_buffer": ""
 }
 
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
-def to_superscript(text):
-    return "".join(superscript_digits.get(c, c) for c in text)
+# ----------------- MODE SELECTION ----------------- #
+st.radio(
+    "Differentiation Type:",
+    ["Normal", "Implicit", "Parametric"],
+    horizontal=True,
+    key="mode"
+)
 
+# ----------------- ACTIVE BOX ----------------- #
+boxes = ["Function", "Steps"] if st.session_state.mode != "Parametric" else ["x(t)", "y(t)", "Steps"]
+if st.session_state.active_box not in boxes:
+    st.session_state.active_box = boxes[0]
 
-def add_key(key):
-    symbol_map = {
-        "＋": "+",
-        "−": "-",
-        "×": "*",
-        "÷": "/",
-        "a²": "²"
-    }
+st.radio(
+    "Math Keyboard Input Goes To:",
+    boxes,
+    horizontal=True,
+    key="active_box"
+)
 
+# ----------------- INPUT BOXES ----------------- #
+if st.session_state.mode in ["Normal", "Implicit"]:
+    st.text_input("Enter Function / Equation:", key="func", placeholder="Example: 2x³ + 3x")
+else:
+    st.text_input("x(t) =", key="x_t", placeholder="Example: t²")
+    st.text_input("y(t) =", key="y_t", placeholder="Example: t³")
 
-    # Handle aᵇ separately
-    if key == "aᵇ":
-        st.session_state.waiting_for_power = True
-        st.session_state.power_buffer = ""  # store multiple digits
+st.text_area("Working steps (one per line):", key="steps", height=160)
+
+# ----------------- KEYBOARD ----------------- #
+st.markdown("### 🔢 Math Keyboard")
+
+if st.session_state.mode == "Parametric":
+    left_keys = [
+        ["7","8","9","+","−"],
+        ["4","5","6","×","÷"],
+        ["1","2","3",".","π"],
+        ["0","dx/dt","dy/dt","dy/dx","="],
+        ["sqrt(","⌫","Clear"]
+    ]
+    right_keys = [
+        ["a²","aᵇ","x","t",None],   # include t here
+        ["("," )","y",None,None],
+        ["sin(","cos(","tan(",None,None],
+        ["sec(","ln(","exp(",None,None]
+    ]
+else:  # Normal or Implicit
+    left_keys = [
+        ["7","8","9","+","−"],
+        ["4","5","6","×","÷"],
+        ["1","2","3",".","π"],
+        ["0","d/dx","dy/dx","sqrt(","="],
+        ["⌫","Clear"]
+    ]
+    right_keys = [
+        ["a²","aᵇ","x",None,None],  # no t here
+        ["("," )","y",None,None],
+        ["sin(","cos(","tan(",None,None],
+        ["sec(","ln(","exp(",None,None]
+    ]
+    
+# Superscript digit mapping
+superscript_map = {
+    "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
+    "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹"
+}
+
+def insert_key(key):
+    if not key:
         return
 
+    # Map active box names to session_state keys
+    box_map = {
+        "Function": "func",
+        "x(t)": "x_t",
+        "y(t)": "y_t",
+        "Steps": "steps"
+    }
+    target = box_map[st.session_state.active_box]
 
-    # If waiting for power (multi-digit)
-    if st.session_state.get("waiting_for_power", False):
+    # Handle exponent start
+    if key == "aᵇ":
+        st.session_state.waiting_power = True
+        st.session_state.power_buffer = ""
+        return
+
+    # If waiting for exponent digits
+    if getattr(st.session_state, "waiting_power", False):
         if key.isdigit():
+            # Add superscript digit visually
+            st.session_state[target] += superscript_map[key]
             st.session_state.power_buffer += key
-            return  # do not insert yet
+            return
         else:
-            # End of exponent, insert as superscript
-            power = ''.join(c for c in st.session_state.power_buffer if c.isdigit())
-            insert_sup = to_superscript(power)
-            if st.session_state.active_box == "Function":
-                st.session_state.original_function += insert_sup
-            else:
-                st.session_state.student_steps += insert_sup
-            st.session_state.waiting_for_power = False
+            # End exponent mode if non-digit pressed
+            st.session_state.waiting_power = False
             st.session_state.power_buffer = ""
 
+    # Clear button
+    if key == "Clear":
+        st.session_state[target] = ""
+        return
 
-    # Normal insertion
-    insert = symbol_map.get(key, key)
-    if st.session_state.active_box == "Function":
-        st.session_state.original_function += insert
-    else:
-        st.session_state.student_steps += insert
+    # Backspace button
+    if key == "⌫":
+        st.session_state[target] = st.session_state[target][:-1]
+        return
 
+    # Default insertion
+    st.session_state[target] += key
 
-def delete_key():
-    if st.session_state.active_box == "Function":
-        st.session_state.original_function = st.session_state.original_function[:-1]
-    else:
-        st.session_state.student_steps = st.session_state.student_steps[:-1]
-
-
-def clear_box():
-    if st.session_state.active_box == "Function":
-        st.session_state.original_function = ""
-    else:
-        st.session_state.student_steps = ""
-
-
-# ---------------- Render Keyboard ----------------
-for row_index, row in enumerate(keys):
-    cols = st.columns(len(row))
-    for col_index, key in enumerate(row):
-
-
-        # Gap between groups
-        if key is None:
-            cols[col_index].markdown("&nbsp;")
-            continue
-
-        symbol_map_for_key = {
-            "⌫": "back", 
-            "Clear": "clear"
-            }
-
-        # Unique key for Streamlit button to prevent fast-click issues
-        button_key = f"{st.session_state.active_box}_{symbol_map_for_key.get(key, key)}_{row_index}_{col_index}"
-
-
-        # Attach appropriate callback
-        if key == "⌫":
-            cols[col_index].button(key, key=button_key, use_container_width=True, on_click=delete_key)
-        elif key == "Clear":
-            cols[col_index].button(key, key=button_key, use_container_width=True, on_click=clear_box)
-        else:
-            cols[col_index].button(key, key=button_key, use_container_width=True, on_click=add_key, args=(key,))
-
-# ---------- Frontend: Unicode superscript → LaTeX ----------
-
+cols = st.columns([3,2])
+for row in left_keys:
+    row_cols = cols[0].columns(len(row))
+    for i, key in enumerate(row):
+        row_cols[i].button(key, on_click=insert_key, args=(key,), use_container_width=True)
+for row in right_keys:
+    row_cols = cols[1].columns(len(row))
+    for i, key in enumerate(row):
+        if key is not None:
+            row_cols[i].button(key, on_click=insert_key, args=(key,), use_container_width=True)
 
 import re
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
-def ui_to_latex(expr):
-    # ---------------- Superscript digits ----------------
-    sup_map = {
-        "⁰": "0", "¹": "1", "²": "2", "³": "3",
-        "⁴": "4", "⁵": "5", "⁶": "6",
-        "⁷": "7", "⁸": "8", "⁹": "9"
-    }
+# ----------------- BACKEND HELPERS ----------------- #
+def to_backend(expr: str) -> str:
+    if not expr:
+        return ""
+    # Superscripts → Python power notation
+    expr = expr.replace("⁰","**0").replace("¹","**1").replace("²","**2") \
+               .replace("³","**3").replace("⁴","**4").replace("⁵","**5") \
+               .replace("⁶","**6").replace("⁷","**7").replace("⁸","**8") \
+               .replace("⁹","**9")
+    # Replace math symbols
+    expr = expr.replace("−","-").replace("×","*").replace("÷","/")
+    return expr
 
-    # Convert unicode superscripts to normal digits
-    result = ""
-    i = 0
-    while i < len(expr):
-        c = expr[i]
-        if c in sup_map:
-            power = ""
-            while i < len(expr) and expr[i] in sup_map:
-                power += sup_map[expr[i]]
-                i += 1
-            result += f"^{power}"
-        else:
-            result += c
-            i += 1
-
-    # ---------------- Safe exponent conversion ----------------
-    # x^{ {2} } → x**(2)
-    result = re.sub(r'\^\{\s*\{(\d+)\}\s*\}', r'**(\1)', result)
-    # x^{2} → x**(2)
-    result = re.sub(r'\^\{(\d+)\}', r'**(\1)', result)
-    # x^2 → x**2
-    result = re.sub(r'\^(\d+)', r'**\1', result)
-
-    # ---------------- Explicit multiplication ----------------
-    # number followed by letter or opening parenthesis → 8x → 8*x
-    result = re.sub(r'(\d)([a-zA-Z(])', r'\1*\2', result)
-    # letter followed by number or opening parenthesis → x2 → x*2
-    result = re.sub(r'([a-zA-Z])(\d|\()', r'\1*\2', result)
-    # closing brace followed by letter or opening parenthesis → }x → }*x
-    result = re.sub(r'(\})([a-zA-Z(])', r'\1*\2', result)
-
-    return result
-
-from sympy import sympify, symbols
-
-# ---------- NEW HELPER FUNCTION FOR HISTORY DISPLAY ----------
-from sympy import sympify, latex, Symbol
-
-def render_step_to_latex(step_str):
-    """
-    Convert a user-input step string to a valid LaTeX string for Streamlit.
-    """
-    x = Symbol('x')  # define symbols
+def parse_expr_safe(expr: str):
     try:
-        parsed = sympify(ui_to_latex(step_str.replace(" ", "")))
-        return latex(parsed)
+        # Allow implicit multiplication (e.g., 4x → 4*x, 2(x+1) → 2*(x+1))
+        transformations = (standard_transformations + (implicit_multiplication_application,))
+        return parse_expr(expr, transformations=transformations)
     except Exception as e:
-        return f"\\text{{{step_str}}}"
-    
-# ---------------- CHECK BUTTON ----------------
+        raise e
+
+def to_latex(expr: str) -> str:
+    if not expr:
+        return ""
+    expr = expr.replace("**","^").replace("*","")
+    expr = expr.replace("d/dx", r"\frac{d}{dx} ")
+    expr = expr.replace("dy/dx", r"\frac{dy}{dx}")
+    expr = re.sub(r"\b(sin|cos|tan|sec|csc|cot|ln|exp)\b", r"\\\1", expr)
+    return expr
+
+# ----------------- CHECK BUTTON ----------------- #
 st.divider()
-
 if st.button("✅ Check Steps"):
-    if st.session_state.original_function.strip() == "":
-        st.error("Please enter the original function.")
-    elif st.session_state.student_steps.strip() == "":
-        st.error("Please enter your working steps.")
+    if st.session_state.mode in ["Normal","Implicit"] and not st.session_state.func.strip():
+        st.error("Please enter a function/equation"); st.stop()
+    if st.session_state.mode=="Parametric" and (not st.session_state.x_t.strip() or not st.session_state.y_t.strip()):
+        st.error("Please enter both x(t) and y(t)"); st.stop()
+    if not st.session_state.steps.strip():
+        st.error("Please enter your steps"); st.stop()
+
+    steps_lines = [l.strip() for l in st.session_state.steps.splitlines() if l.strip()]
+
+    if st.session_state.mode=="Parametric":
+        x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
+        y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
+        results = check_derivative_steps(
+            student_steps=steps_lines,
+            original_func=None,
+            mode="Parametric",
+            parametric_inputs=(x_expr, y_expr)
+        )
+    elif st.session_state.mode=="Implicit":
+        func_str = st.session_state.func
+        if "=" not in func_str:
+            st.error("Implicit mode expects an equation like: x^2 + y^2 = 25"); st.stop()
+        lhs_str, rhs_str = func_str.split("=", 1)
+        lhs_expr = parse_expr_safe(to_backend(lhs_str.strip()))
+        rhs_expr = parse_expr_safe(to_backend(rhs_str.strip()))
+        results = check_derivative_steps(
+            student_steps=steps_lines,
+            original_func=(lhs_expr, rhs_expr),
+            mode="Implicit"
+        )
     else:
-        # Convert UI input → safe SymPy string
-        latex_function = ui_to_latex(st.session_state.original_function.replace(" ", ""))
-        latex_steps = ui_to_latex(st.session_state.student_steps.replace(" ", ""))
+        # Normal mode
+        func_expr = parse_expr_safe(to_backend(st.session_state.func))
+        results = check_derivative_steps(
+            student_steps=steps_lines,
+            original_func=func_expr,
+            mode="Normal"
+        )
 
-        # Convert to SymPy expressions
-        x = symbols('x')
+    # Preview
+    st.markdown("### 👀 Preview")
+    if st.session_state.mode=="Parametric":
+        st.latex("x(t) = " + to_latex(st.session_state.x_t))
+        st.latex("y(t) = " + to_latex(st.session_state.y_t))
+    else:
+        st.latex(to_latex(st.session_state.func))
+    for line in st.session_state.steps.splitlines():
+        st.latex(to_latex(line))
 
-        try:
-            original_func_expr = sympify(latex_function)
-        except Exception as e:
-            st.error(f"Error parsing original function: {e}")
-            original_func_expr = None
+    # Feedback
+    st.markdown("## 📋 Feedback")
+    for msg in results:
+        if "Correction:" in msg:
+            user_input, correct = msg.split("Correction:",1)
+            st.markdown("**Your Input:**"); st.latex(to_latex(user_input.strip()))
+            st.markdown("**Correct Answer:**"); st.latex(to_latex(correct.strip()))
+        else:
+            st.write(msg)
 
-        student_steps_list = []
-        for i, line in enumerate(latex_steps.splitlines()):
-            line = line.strip()
-            if line == "":
-                continue
-            try:
-                student_steps_list.append(sympify(line))
-            except Exception as e:
-                st.error(f"Error parsing step {i+1}: '{line}': {e}")
+    # Save history (unchanged)
+    st.session_state.history.append({
+        "mode": st.session_state.mode,
+        "func": st.session_state.func,
+        "x": st.session_state.x_t,
+        "y": st.session_state.y_t,
+        "steps": st.session_state.steps,
+        "results": results
+    })
+    st.session_state.history = st.session_state.history[-10:]
 
-        # Only check if parsing succeeded
-        if original_func_expr is not None and student_steps_list:
-            results = check_derivative_steps(student_steps_list, original_func_expr)
-
-            # Preview (pretty math)
-            st.markdown("### 👀 Math Preview")
-            # Convert each line to SymPy and render
-            for line in latex_steps.splitlines():
-                if line.strip() == "":
-                    continue
-                try:
-                    st.latex(latex(sympify(line.strip())))
-                except:
-                    st.write(line.strip())  # fallback if parsing fails
-
-            # Feedback
-            st.markdown("## 📋Feedback")
-            for msg in results:
-                if "Correction:" in msg:
-                    text, correction = msg.split("Correction:")
-                    st.write(text.strip())
-                    st.latex(latex(sympify(correction.strip())))
-                else:
-                    st.write(msg)
-
-            # Save to history
-            st.session_state.history.append({
-                "function": st.session_state.original_function,
-                "steps": st.session_state.student_steps
-            })
-
-# ---------------- HISTORY SIDEBAR ----------------
+# ----------------- HISTORY SIDEBAR ----------------- #
 st.sidebar.markdown("### 🕘 History")
-
-if st.session_state.history:
-    for i, item in enumerate(reversed(st.session_state.history[-10:]), 1):
-        st.sidebar.markdown(f"**{i}. Function:**")
-        st.sidebar.latex(render_step_to_latex(item["function"]))
-        st.sidebar.markdown("**Steps:**")
-        for line in item["steps"].splitlines():
-            if line.strip():
-                st.sidebar.latex(render_step_to_latex(line.strip()))
-        st.sidebar.divider()
-else:
-    st.sidebar.write("No history yet.")
+for h in reversed(st.session_state.history):
+    st.sidebar.markdown(f"**Mode:** {h['mode']}")
+    if h['mode']=="Parametric":
+        st.sidebar.latex("x(t) = "+to_latex(h['x']))
+        st.sidebar.latex("y(t) = "+to_latex(h['y']))
+    else:
+        st.sidebar.latex(to_latex(h['func']))
+    st.sidebar.markdown("**Steps / Corrections:**")
+    for msg in h['results']:
+        if "Correction:" in msg:
+            user_input, correct = msg.split("Correction:",1)
+            st.sidebar.markdown("Your Input:"); st.sidebar.latex(to_latex(user_input.strip()))
+            st.sidebar.markdown("Correct Answer:"); st.sidebar.latex(to_latex(correct.strip()))
+        else:
+            st.sidebar.write(msg)
+    st.sidebar.divider()

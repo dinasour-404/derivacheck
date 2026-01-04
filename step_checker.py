@@ -1,38 +1,94 @@
-from sympy import simplify, symbols
+from sympy import symbols, diff, simplify
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
-# Optional: utility functions for normalization or comparison
-def equivalent(expr1, expr2):
-    """
-    Check if two SymPy expressions are equivalent.
-    """
-    return simplify(expr1 - expr2) == 0
+x, y, t = symbols('x y t')
 
-def normalize(expr):
-    """
-    Simplify and normalize an expression for comparison.
-    """
-    return simplify(expr)
+# ----------------- UTILITY ----------------- #
+def parse_expr_safe(expr):
+    if isinstance(expr, str):
+        # Replace all superscript digits with Python power notation
+        superscripts = {
+            "⁰": "**0", "¹": "**1", "²": "**2", "³": "**3", "⁴": "**4",
+            "⁵": "**5", "⁶": "**6", "⁷": "**7", "⁸": "**8", "⁹": "**9"
+        }
+        for sup, repl in superscripts.items():
+            expr = expr.replace(sup, repl)
 
-# Main function your app calls
-def check_derivative_steps(student_steps, original_func):
-    """
-    Check each step of a derivative against the correct derivative.
+        # Replace math symbols
+        expr = expr.replace("−","-").replace("×","*").replace("÷","/")
 
-    Parameters:
-    - student_steps: list of SymPy expressions (each step)
-    - original_func: SymPy expression of the original function
+        # Use SymPy parser with implicit multiplication
+        transformations = (standard_transformations + (implicit_multiplication_application,))
+        expr = parse_expr(expr, transformations=transformations)
+    return expr
 
-    Returns:
-    - List of feedback messages for each step
-    """
+# ----------------- PARAMETRIC ----------------- #
+def parametric_derivative_chain(x_t, y_t):
+    dx_dt = diff(x_t, t)
+    dy_dt = diff(y_t, t)
+    if dx_dt == 0:
+        raise ValueError("dx/dt is zero, derivative undefined.")
+    return simplify(dy_dt / dx_dt)
+
+# ----------------- IMPLICIT ----------------- #
+def implicit_derivative(lhs, rhs=0):
+    expr = lhs - rhs
+    dx = diff(expr, x)
+    dy = diff(expr, y)
+    if dy == 0:
+        raise ValueError("dy/dx undefined (division by zero).")
+    return simplify(-dx / dy)
+
+# ----------------- MAIN STEP CHECKER ----------------- #
+def check_derivative_steps(student_steps, original_func=None, mode="Normal", parametric_inputs=None):
     feedback = []
-    x = symbols('x')
-    correct = simplify(original_func)
 
+    if mode == "Parametric":
+        if not parametric_inputs or len(parametric_inputs) != 2:
+            raise ValueError("Parametric mode requires x(t) and y(t).")
+        x_expr, y_expr = parametric_inputs
+
+        # Compute expected steps
+        dx_dt = diff(x_expr, t)
+        dy_dt = diff(y_expr, t)
+        dy_dx_raw = dy_dt / dx_dt
+        dy_dx_simplified = simplify(dy_dx_raw)
+
+        expected_steps = [dx_dt, dy_dt, dy_dx_raw, dy_dx_simplified]
+
+        for i, step in enumerate(student_steps):
+            step_expr = parse_expr_safe(step)
+            if i < len(expected_steps):
+                expected = expected_steps[i]
+            else:
+                expected = dy_dx_simplified  # fallback to final answer
+
+            if simplify(step_expr - expected) == 0:
+                feedback.append(f"Step {i+1}: ✅ Correct")
+            else:
+                feedback.append(f"Step {i+1}: ❌ Incorrect. Correction: {expected}")
+        return feedback
+
+
+    if mode == "Implicit":
+        if not isinstance(original_func, tuple) or len(original_func) != 2:
+            raise ValueError("Implicit mode requires a tuple (lhs, rhs).")
+        lhs, rhs = original_func
+        correct_derivative = implicit_derivative(lhs, rhs)
+        for i, step in enumerate(student_steps):
+            step_expr = parse_expr_safe(step)
+            if simplify(step_expr - correct_derivative) == 0:
+                feedback.append(f"Step {i+1}: ✅ Correct")
+            else:
+                feedback.append(f"Step {i+1}: ❌ Incorrect. Correction: {correct_derivative}")
+        return feedback
+
+    # Normal mode
+    correct_expr = parse_expr_safe(original_func)
     for i, step in enumerate(student_steps):
-        # Compute expected derivative for this step
-        expected = simplify(correct.diff(x) if i == 0 else student_steps[i-1].diff(x))
-        if equivalent(step, expected):
+        step_expr = parse_expr_safe(step)
+        expected = diff(correct_expr, x) if i == 0 else diff(parse_expr_safe(student_steps[i-1]), x)
+        if simplify(step_expr - expected) == 0:
             feedback.append(f"Step {i+1}: ✅ Correct")
         else:
             feedback.append(f"Step {i+1}: ❌ Incorrect. Correction: {expected}")

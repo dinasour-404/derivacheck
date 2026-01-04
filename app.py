@@ -90,14 +90,14 @@ def get_placeholders():
     if mode == "Implicit":
         return {
             "func": "Example: x² + y² = 25",
-            "steps": "Example:\n1) Differentiate both sides w.r.t x\n2) 2x + 2y dy/dx = 0"
+            "steps": "Example:\n1) Differentiate both sides \n2) 2x + 2y dy/dx = 0"
         }
 
     # Parametric
     return {
         "x_t": "Example: t²",
         "y_t": "Example: t³",
-        "steps": "Example:\n1) dx/dt = 2t\n2) dy/dt = 3t²\n3) dy/dx = (dy/dt)/(dx/dt)"
+        "steps": "Example:\n1) dx/dt = 2t\n2) dy/dt = 3t²\n3) dy/dx = (dy/dt)*(dt/dx)"
     }
 
 # Get current placeholders

@@ -57,31 +57,31 @@ st.markdown("### 🔢 Math Keyboard")
 
 if st.session_state.mode == "Parametric":
     left_keys = [
-        ["7","8","9","+","−"],
+        ["2","2","3","+","−"],
         ["4","5","6","×","÷"],
-        ["1","2","3",".","π"],
+        ["7","8","9",".","π"],
         ["0","dx/dt","dy/dt","dy/dx","="],
         ["sqrt(","⌫","Clear"]
     ]
     right_keys = [
-        ["aᵇ","x","t",None],   # include t here
-        ["("," )","y",None,None],
-        ["sin(","cos(","tan(",None,None],
-        ["sec(","ln(","exp(",None,None]
+        [None,"aᵇ","x","t",None,None],   # include t here
+        [None,"("," )","y",None,None],
+        [None,"sin(","cos(","tan(",None,None],
+        [None,"sec(","ln(","exp(",None,None]
     ]
 else:  # Normal or Implicit
     left_keys = [
-        ["7","8","9","+","−"],
+        ["1","2","3","+","−"],
         ["4","5","6","×","÷"],
-        ["1","2","3",".","π"],
+        ["7","8","9",".","π"],
         ["0","d/dx","dy/dx","sqrt(","="],
         ["⌫","Clear"]
     ]
     right_keys = [
-        ["a²","aᵇ","x",None,None],  # no t here
-        ["("," )","y",None,None],
-        ["sin(","cos(","tan(",None,None],
-        ["sec(","ln(","exp(",None,None]
+        [None,"aᵇ","x",None,None,None],  # no t here
+        [None,"("," )","y",None,None],
+        [None,"sin(","cos(","tan(",None,None],
+        [None,"sec(","ln(","exp(",None,None]
     ]
     
 # Superscript digit mapping

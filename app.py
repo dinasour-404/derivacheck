@@ -318,9 +318,8 @@ if st.button("✅ Check Steps"):
             st.write(msg)
         
     st.markdown("### 🔮 Auto-computed reference")
-        for e in expected_steps:
-            st.latex(e["display"])
-
+    for e in expected_steps:
+        st.latex(e["display"])
     
     # Save history (unchanged)
     st.session_state.history.append({

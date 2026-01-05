@@ -10,6 +10,12 @@ dy_dx = symbols('dy_dx')
 # ----------------- UTILITY ----------------- #
 def parse_expr_safe(expr):
     if isinstance(expr, str):
+
+        # Allow equations: A = B → A - B
+        if "=" in expr:
+            lhs, rhs = expr.split("=", 1)
+            expr = f"({lhs}) - ({rhs})"
+        
         # Replace superscripts
         superscripts = {
             "⁰": "**0", "¹": "**1", "²": "**2", "³": "**3", "⁴": "**4",

@@ -312,7 +312,7 @@ if st.button("✅ Check Steps"):
 st.markdown("## 📋 Feedback")
 
 expected_steps = []
-if st.session_state.mode == "Parametric":
+    if st.session_state.mode == "Parametric":
         t = sp.symbols('t')
         x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
         y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
@@ -326,7 +326,7 @@ if st.session_state.mode == "Parametric":
             {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
             {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
         ]
- elif st.session_state.mode == "Implicit":
+    elif st.session_state.mode == "Implicit":
         # Parse and symbol setup
         x, y = sp.symbols('x y')
         func_str = st.session_state.func
@@ -344,15 +344,15 @@ if st.session_state.mode == "Parametric":
             {"label": "d/dx(lhs)", "expr": d_lhs, "display": r"\frac{d}{dx}(\text{LHS}) = " + sp.latex(d_lhs)},
             {"label": "d/dx(rhs)", "expr": d_rhs, "display": r"\frac{d}{dx}(\text{RHS}) = " + sp.latex(d_rhs)},
         ]
-        if dy_dx is not None:
+    if dy_dx is not None:
             expected_steps.append({"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)})
 
-else:  # Normal
-        x = sp.symbols('x')
-        func_expr = parse_expr_safe(to_backend(st.session_state.func))
-        dfx = sp.simplify(sp.diff(func_expr, x))
-        expected_steps = [
-          {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
+    else:  # Normal
+            x = sp.symbols('x')
+            func_expr = parse_expr_safe(to_backend(st.session_state.func))
+            dfx = sp.simplify(sp.diff(func_expr, x))
+            expected_steps = [
+            {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
         ]
 
     # Add completeness feedback

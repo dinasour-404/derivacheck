@@ -326,8 +326,7 @@ if st.session_state.mode == "Parametric":
             {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
             {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
         ]
-
-    elif st.session_state.mode == "Implicit":
+ elif st.session_state.mode == "Implicit":
         # Parse and symbol setup
         x, y = sp.symbols('x y')
         func_str = st.session_state.func

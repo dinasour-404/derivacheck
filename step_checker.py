@@ -146,7 +146,7 @@ def check_derivative_steps(student_steps, original_func=None, mode="Normal", par
 
     #Normal mode
     elif mode == "Normal":
-    correct_expr = parse_expr_safe(original_func)
+        correct_expr = parse_expr_safe(original_func)
     for i, step in enumerate(student_steps):
         step_expr = parse_expr_safe(step)
         expected = diff(correct_expr, x) if i == 0 else diff(parse_expr_safe(student_steps[i-1]), x)

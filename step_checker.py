@@ -75,7 +75,7 @@ def analyze_steps(student_steps, expected_steps):
             missing.append(f"{e['label']} = {latex_expr}")
 
     if missing:
-        feedback.append("⚠️ Your steps are incomplete. Missing: " + ", ".join(missing))
+        feedback.append("⚠️ Your steps are incomplete.")
 
     # Detect extras: student lines that don't reference any expected label
     extras = []

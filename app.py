@@ -347,7 +347,7 @@ if st.session_state.mode == "Parametric":
         if dy_dx is not None:
             expected_steps.append({"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)})
 
-    else:  # Normal
+else:  # Normal
         x = sp.symbols('x')
         func_expr = parse_expr_safe(to_backend(st.session_state.func))
         dfx = sp.simplify(sp.diff(func_expr, x))

@@ -2,6 +2,7 @@ from sympy import symbols, diff, simplify
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 import sympy as sp
 import streamlit as st
+import re
 
 x, y, t = symbols('x y t')
 dy_dx = symbols('dy_dx')
@@ -22,6 +23,9 @@ def parse_expr_safe(expr):
 
         # Fix caret and ln
         expr = expr.replace("^","**").replace("ln","log")
+
+        # Auto-fix: y dy/dx  →  y*dy_dx
+        expr = re.sub(r'([a-zA-Z])\s*dy/dx', r'\1*dy_dx', expr)
 
         # Map dy/dx to dy_dx
         expr = expr.replace("dy/dx", "dy_dx")

@@ -145,7 +145,8 @@ def check_derivative_steps(student_steps, original_func=None, mode="Normal", par
         return feedback
 
 #Normal mode
-   correct_expr = parse_expr_safe(original_func)
+elif mode == "Normal":
+    correct_expr = parse_expr_safe(original_func)
     for i, step in enumerate(student_steps):
         step_expr = parse_expr_safe(step)
         expected = diff(correct_expr, x) if i == 0 else diff(parse_expr_safe(student_steps[i-1]), x)
@@ -153,3 +154,6 @@ def check_derivative_steps(student_steps, original_func=None, mode="Normal", par
             feedback.append(f"Step {i+1}: ✅ Correct")
         else:
             feedback.append(f"Step {i+1}: ❌ Incorrect. Correction: {expected}")
+
+    return feedback
+

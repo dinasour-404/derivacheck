@@ -312,42 +312,6 @@ if st.button("✅ Check Steps"):
 st.markdown("## 📋 Feedback")
 
 expected_steps = []
-dfx = None
-dy_dx = None
-
-# -------- Parametric -------- #
-if st.session_state.mode == "Parametric":
-    t = sp.symbols('t')
-    x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
-    y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
-
-    dx_dt = sp.diff(x_expr, t)
-    dy_dt = sp.diff(y_expr, t)
-    dy_dx = sp.simplify(dy_dt / dx_dt)
-
-    expected_steps = [
-        {"label": "dx/dt", "expr": dx_dt, "display": r"\frac{dx}{dt} = " + sp.latex(dx_dt)},
-        {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
-        {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
-    ]
-
-# -------- Implicit -------- #
-elif st.session_state.mode == "Implicit":
-    x, y = sp.symbols('x y')
-    lhs_str, rhs_str = st.session_state.func.split("=", 1)
-    lhs_expr = parse_expr_safe(to_backend(lhs_str.strip()))
-    rhs_expr = parse_expr_safe(to_backend(rhs_str.strip()))
-
-    expr = lhs_expr - rhs_expr
-    dx = sp.diff(expr, x)
-    dy = sp.diff(expr, y)
-    dy_dx = sp.simplify(-dx / dy)
-
-    expected_steps = [
-        {"label": "implicit diff", "expr": dy_dx,
-         "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)}
-    ]
-
 # -------- Normal -------- #
 else:
     x = sp.symbols('x')

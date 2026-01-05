@@ -312,6 +312,42 @@ if st.button("✅ Check Steps"):
     st.markdown("## 📋 Feedback")
     expected_steps = []
 
+    if st.session_state.mode == "Normal":
+        x = sp.symbols('x')
+        func_expr = parse_expr_safe(to_backend(st.session_state.func))
+        final_answer = sp.simplify(sp.diff(func_expr, x))
+        st.markdown("### ✅ Final Answer")
+        st.latex(r"\frac{d}{dx} = " + sp.latex(final_answer))
+
+    elif st.session_state.mode == "Implicit":
+        x, y = sp.symbols('x y')
+        lhs_str, rhs_str = st.session_state.func.split("=", 1)
+        lhs = parse_expr_safe(to_backend(lhs_str))
+        rhs = parse_expr_safe(to_backend(rhs_str))
+
+    elif st.session_state.mode == "Parametric":
+        t = sp.symbols('t')
+        x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
+        y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
+
+    dx_dt = sp.diff(x_expr, t)
+    dy_dt = sp.diff(y_expr, t)
+    final_answer = sp.simplify(dy_dt / dx_dt)
+
+    st.markdown("### ✅ Final Answer")
+    st.latex(r"\frac{dy}{dx} = " + sp.latex(final_answer))
+
+    
+    expr = lhs - rhs
+    dx = sp.diff(expr, x)
+    dy = sp.diff(expr, y)
+    final_answer = sp.simplify(-dx / dy)
+
+    st.markdown("### ✅ Final Answer")
+    st.latex(r"\frac{dy}{dx} = " + sp.latex(final_answer))
+
+
+
     if st.session_state.mode == "Parametric":
         t = sp.symbols('t')
         x_expr = parse_expr_safe(to_backend(st.session_state.x_t))

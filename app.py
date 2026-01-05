@@ -308,105 +308,88 @@ if st.button("✅ Check Steps"):
     for line in st.session_state.steps.splitlines():
         st.latex(to_latex(line))
 
-    # Feedback
-    st.markdown("## 📋 Feedback")
-    expected_steps = []
+    # ---------------- FEEDBACK ---------------- #
+st.markdown("## 📋 Feedback")
 
-    if st.session_state.mode == "Normal":
-        x = sp.symbols('x')
-        func_expr = parse_expr_safe(to_backend(st.session_state.func))
-        final_answer = sp.simplify(sp.diff(func_expr, x))
-        st.markdown("### ✅ Final Answer")
-        st.latex(r"\frac{d}{dx} = " + sp.latex(final_answer))
+expected_steps = []
+dfx = None
+dy_dx = None
 
-    elif st.session_state.mode == "Implicit":
-        x, y = sp.symbols('x y')
-        lhs_str, rhs_str = st.session_state.func.split("=", 1)
-        lhs = parse_expr_safe(to_backend(lhs_str))
-        rhs = parse_expr_safe(to_backend(rhs_str))
-
-    elif st.session_state.mode == "Parametric":
-        t = sp.symbols('t')
-        x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
-        y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
+# -------- Parametric -------- #
+if st.session_state.mode == "Parametric":
+    t = sp.symbols('t')
+    x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
+    y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
 
     dx_dt = sp.diff(x_expr, t)
     dy_dt = sp.diff(y_expr, t)
-    final_answer = sp.simplify(dy_dt / dx_dt)
+    dy_dx = sp.simplify(dy_dt / dx_dt)
 
-    st.markdown("### ✅ Final Answer")
-    st.latex(r"\frac{dy}{dx} = " + sp.latex(final_answer))
+    expected_steps = [
+        {"label": "dx/dt", "expr": dx_dt, "display": r"\frac{dx}{dt} = " + sp.latex(dx_dt)},
+        {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
+        {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
+    ]
 
-    
-    expr = lhs - rhs
+# -------- Implicit -------- #
+elif st.session_state.mode == "Implicit":
+    x, y = sp.symbols('x y')
+    lhs_str, rhs_str = st.session_state.func.split("=", 1)
+    lhs_expr = parse_expr_safe(to_backend(lhs_str.strip()))
+    rhs_expr = parse_expr_safe(to_backend(rhs_str.strip()))
+
+    expr = lhs_expr - rhs_expr
     dx = sp.diff(expr, x)
     dy = sp.diff(expr, y)
-    final_answer = sp.simplify(-dx / dy)
+    dy_dx = sp.simplify(-dx / dy)
 
-    st.markdown("### ✅ Final Answer")
-    st.latex(r"\frac{dy}{dx} = " + sp.latex(final_answer))
+    expected_steps = [
+        {"label": "implicit diff", "expr": dy_dx,
+         "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)}
+    ]
 
+# -------- Normal -------- #
+else:
+    x = sp.symbols('x')
+    func_expr = parse_expr_safe(to_backend(st.session_state.func))
+    dfx = sp.simplify(sp.diff(func_expr, x))
 
+    expected_steps = [
+        {"label": "d/dx", "expr": dfx,
+         "display": r"\frac{d}{dx} = " + sp.latex(dfx)}
+    ]
 
-    if st.session_state.mode == "Parametric":
-        t = sp.symbols('t')
-        x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
-        y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
+# ---------------- FINAL ANSWER DISPLAY ---------------- #
+st.markdown("### ✅ Final Answer")
 
-        dx_dt = sp.diff(x_expr, t)
-        dy_dt = sp.diff(y_expr, t)
-        dy_dx = sp.simplify(dy_dt / dx_dt)
+if st.session_state.mode == "Normal" and dfx is not None:
+    st.latex(r"\frac{d}{dx} = " + sp.latex(dfx))
 
-        expected_steps = [
-            {"label": "dx/dt", "expr": dx_dt, "display": r"\frac{dx}{dt} = " + sp.latex(dx_dt)},
-            {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
-            {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
-        ]
+elif st.session_state.mode == "Implicit" and dy_dx is not None:
+    st.latex(r"\frac{dy}{dx} = " + sp.latex(dy_dx))
 
-    elif st.session_state.mode == "Implicit":
-        # Parse and symbol setup
-        x, y = sp.symbols('x y')
-        func_str = st.session_state.func
-        lhs_str, rhs_str = func_str.split("=", 1)
-        lhs_expr = parse_expr_safe(to_backend(lhs_str.strip()))
-        rhs_expr = parse_expr_safe(to_backend(rhs_str.strip()))
+elif st.session_state.mode == "Parametric" and dy_dx is not None:
+    st.latex(r"\frac{dy}{dx} = " + sp.latex(dy_dx))
 
-        d_lhs = sp.diff(lhs_expr, x) + sp.diff(lhs_expr, y) * sp.Symbol('dy/dx')  # generalized implicit
-        d_rhs = sp.diff(rhs_expr, x) + sp.diff(rhs_expr, y) * sp.Symbol('dy/dx')
+# ---------------- COMPLETENESS CHECK ---------------- #
+completeness_feedback = analyze_steps(steps_lines, expected_steps)
+results = completeness_feedback + results
 
-        # Solve for dy/dx if possible
-        dy_dx = sp.simplify(sp.solve(sp.Eq(d_lhs, d_rhs), sp.Symbol('dy/dx'))[0]) if sp.Symbol('dy/dx') in sp.solve(sp.Eq(d_lhs, d_rhs), sp.Symbol('dy/dx'), dict=True)[0] else None
+for msg in results:
+    if "Correction:" in msg:
+        user_input, correct = msg.split("Correction:", 1)
+        st.markdown("**Your Input:**")
+        st.latex(to_latex(user_input.strip()))
+        st.markdown("**Correct Answer:**")
+        st.latex(to_latex(correct.strip()))
+    else:
+        st.write(msg)
 
-        expected_steps = [
-            {"label": "d/dx(lhs)", "expr": d_lhs, "display": r"\frac{d}{dx}(\text{LHS}) = " + sp.latex(d_lhs)},
-            {"label": "d/dx(rhs)", "expr": d_rhs, "display": r"\frac{d}{dx}(\text{RHS}) = " + sp.latex(d_rhs)},
-        ]
-        if dy_dx is not None:
-            expected_steps.append({"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)})
+# ---------------- AUTO-COMPUTED REFERENCE ---------------- #
+st.markdown("### 🔮 Auto-computed reference")
+for e in expected_steps:
+    st.latex(e["display"])
 
-    else:  # Normal
-        x = sp.symbols('x')
-        func_expr = parse_expr_safe(to_backend(st.session_state.func))
-        dfx = sp.simplify(sp.diff(func_expr, x))
-        expected_steps = [
-          {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
-        ]
-
-    # Add completeness feedback
-    completeness_feedback = analyze_steps(steps_lines, expected_steps)
-    results = completeness_feedback + results
-
-    for msg in results:
-        if "Correction:" in msg:
-            user_input, correct = msg.split("Correction:",1)
-            st.markdown("**Your Input:**"); st.latex(to_latex(user_input.strip()))
-            st.markdown("**Correct Answer:**"); st.latex(to_latex(correct.strip()))
-        else:
-            st.write(msg)
-
-    st.markdown("### 🔮 Auto-computed reference")
-    for e in expected_steps:
-        st.latex(e["display"])
     
     # Save history (unchanged)
     st.session_state.history.append({

@@ -305,7 +305,6 @@ if st.button("✅ Check Steps"):
         d_lhs = sp.diff(lhs_expr, x) + sp.diff(lhs_expr, y) * dy_dx_symbol
         d_rhs = sp.diff(rhs_expr, x) + sp.diff(rhs_expr, y) * dy_dx_symbol
 
-        # Solve for dy/dx
         sol = sp.solve(sp.Eq(d_lhs, d_rhs), dy_dx_symbol)
         dy_dx = sp.simplify(sol[0]) if sol else None
 
@@ -358,6 +357,25 @@ if st.button("✅ Check Steps"):
             st.latex(to_latex(user_input.strip()))
             st.markdown("**Correct Answer:**")
             st.latex(to_latex(correct.strip()))
+        else:
+            st.write(msg)
+
+    # ---------------- AUTO-COMPUTED REFERENCE ---------------- #
+    st.markdown("### 🔮 Auto-computed reference")
+    for e in expected_steps:
+        st.latex(e["display"])
+
+    # ---------------- SAVE HISTORY ---------------- #
+    st.session_state.history.append({
+        "mode": st.session_state.mode,
+        "func": st.session_state.func,
+        "x": st.session_state.x_t,
+        "y": st.session_state.y_t,
+        "steps": st.session_state.steps,
+        "results": results
+    })
+    # Keep last 10 entries only
+    st.session_state.history = st.session_state.history[-10:]
 
 # ----------------- HISTORY SIDEBAR ----------------- #
 st.sidebar.markdown("### 🕘 History")

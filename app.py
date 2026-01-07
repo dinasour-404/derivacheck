@@ -38,6 +38,13 @@ textarea::placeholder {
     opacity: 1 !important;        /* fully visible */
     font-style: italic;
 }
+
+input:focus, textarea:focus {
+    caret-color: #ff4da6;
+    border-color: #ff4da6;
+    box-shadow: 0 0 0 2px rgba(255, 77, 166, 0.3);
+}
+
 </style>
 """, unsafe_allow_html=True)
 

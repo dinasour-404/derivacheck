@@ -39,15 +39,15 @@ textarea::placeholder {
     font-style: italic;
 }
 
-/* cursor colour
+/* 4️⃣ Cursor colour */
 input:focus, textarea:focus {
-    caret-color: #ff4da6;
+    caret-color: #ff4da6;         /* cursor color */
     border-color: #ff4da6;
     box-shadow: 0 0 0 2px rgba(255, 77, 166, 0.3);
 }
-
 </style>
 """, unsafe_allow_html=True)
+
 
 st.markdown("""
 

@@ -1,15 +1,53 @@
 import streamlit as st
 import re
-from step_checker import check_derivative_steps, parse_expr_safe
-from user_interface import apply_pink_theme, render_math_keyboard,set_background
+import sympy as sp
+from sympy import simplify
+from step_checker import check_derivative_steps, check_steps_against_expected, parse_expr_safe, analyze_steps
+from user_interface import apply_neomath_theme, render_math_keyboard,set_background
 
 # Apply theme at the start 
-apply_pink_theme()
-set_background("images/background.jpg")
+apply_neomath_theme()
+set_background()
 
 # ----------------- PAGE CONFIG ----------------- #
 st.set_page_config(page_title="DerivaCheck", layout="wide")
-st.markdown('<div class="title-box">🧮 DerivaCheck – Differentiation Step Checker</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="banner"><h1 class="banner-title">🧮 DerivaCheck – Differentiation Step Checker</h1></div>',
+    unsafe_allow_html=True
+)
+
+# ----------------- TUTORIAL STATE ----------------- #
+if "show_tutorial" not in st.session_state:
+    st.session_state.show_tutorial = True  # show tutorial by default first time
+
+# ----------------- TUTORIAL CONTENT ----------------- #
+st.divider()
+if st.session_state.show_tutorial:
+    st.info("👋 Welcome to DerivaCheck! Let's walk through how to use it.")
+
+    st.markdown("### Step 1: Choose Differentiation Type")
+    st.markdown("Pick **Normal**, **Implicit**, or **Parametric** depending on your problem.")
+
+    st.markdown("### Step 2: Enter Your Function or Equation")
+    st.markdown("For example: `2x³ + 3x`")
+
+    st.markdown("### Step 3: Add Your Working Steps")
+    st.markdown("Write each of your working step on a new line.")
+
+    st.markdown("### Step 4: Use the Math Keyboard")
+    st.markdown("Tap buttons to insert symbols like `d/dx` or powers.")
+
+    st.markdown("### Step 5: Press ✅ Check Steps")
+    st.markdown("You'll see feedback comparing your steps to the correct solution.")
+
+    # Hide tutorial button
+    if st.button("Got it! Hide tutorial"):
+        st.session_state.show_tutorial = False
+
+# ----------------- SHOW BACK BUTTON ----------------- #
+if not st.session_state.show_tutorial:
+    if st.button("📖 Show Tutorial Again"):
+        st.session_state.show_tutorial = True
 
 # ----------------- SESSION STATE ----------------- #
 defaults = {
@@ -29,38 +67,82 @@ for k, v in defaults.items():
         st.session_state[k] = v
 
 # ----------------- MODE SELECTION ----------------- #
+st.divider()
+st.markdown('<span class="section-label">Differentiation Type:</span>', unsafe_allow_html=True)
 st.radio(
-    "Differentiation Type:",
-    ["Normal", "Implicit", "Parametric"],
+    label=" ",  # invisible label
+    options=["Normal", "Implicit", "Parametric"],
     horizontal=True,
-    key="mode"
+    key="mode",
+    label_visibility="collapsed"  # hides default spacing
 )
+
 
 # ----------------- ACTIVE BOX ----------------- #
 boxes = ["Function", "Steps"] if st.session_state.mode != "Parametric" else ["x(t)", "y(t)", "Steps"]
 if st.session_state.active_box not in boxes:
     st.session_state.active_box = boxes[0]
 
+st.markdown('<span class="section-label">Math Keyboard Input Goes To:</span>', unsafe_allow_html=True)
 st.radio(
-    "Math Keyboard Input Goes To:",
-    boxes,
+    label=" ",  # visually blank
+    options=boxes,
     horizontal=True,
-    key="active_box"
+    key="active_box",
+    label_visibility="collapsed"  # hides the default label spacing
 )
 
+
 # ----------------- INPUT BOXES ----------------- #
+# Helper to provide placeholders based on mode
+def get_placeholders():
+    mode = st.session_state.mode
+
+    if mode == "Normal":
+        return {
+            "func": "Example: 2x³ + 3x",
+            "steps": "Example:\n1) d/dx (2x³ + 3x)\n2) 6x² + 3"
+        }
+
+    if mode == "Implicit":
+        return {
+            "func": "Example: x² + y² = 25",
+            "steps": "Example:\n1) Differentiate both sides \n2) 2x + 2y dy/dx = 0"
+        }
+
+    # Parametric
+    return {
+        "x_t": "Example: t²",
+        "y_t": "Example: t³",
+        "steps": "Example:\n1) dx/dt = 2t\n2) dy/dt = 3t²\n3) dy/dx = (dy/dt)*(dt/dx)"
+    }
+
+# Get current placeholders
+placeholders = get_placeholders()
+
+# Function Input Section
+st.divider()
 if st.session_state.mode in ["Normal", "Implicit"]:
-    st.text_input("Enter Function / Equation:", key="func", placeholder="Example: 2x³ + 3x")
+    st.markdown('<span class="section-label">Enter Function / Equation:</span>', unsafe_allow_html=True)
+    st.text_input(
+        label=" ",
+        key="func",
+        placeholder=placeholders.get("func", ""),
+        label_visibility="collapsed"   # removes extra gap
+    )
 else:
     st.info("💡 In parametric differentiation, you need both dx/dt and dy/dt. Enter them step by step!")
-    st.text_input("x(t) =", key="x_t", placeholder="Example: t²")
-    st.text_input("y(t) =", key="y_t", placeholder="Example: t³")
+    st.markdown('<span class="section-label">x(t):</span>', unsafe_allow_html=True)
+    st.text_input(" ", key="x_t", placeholder=placeholders.get("x_t", ""), label_visibility="collapsed")
+    st.markdown('<span class="section-label">y(t):</span>', unsafe_allow_html=True)
+    st.text_input(" ", key="y_t", placeholder=placeholders.get("y_t", ""), label_visibility="collapsed")
 
-st.text_area("Working steps (one per line):", key="steps", height=160)
+# Steps Input Section
+st.markdown('<span class="section-label">Working steps (one per line):</span>', unsafe_allow_html=True)
+st.text_area(" ", key="steps", placeholder=placeholders.get("steps", ""), height=160, label_visibility="collapsed")
 
 # ----------------- KEYBOARD ----------------- #
 st.markdown("### 🔢 Math Keyboard")
-
 if st.session_state.mode == "Parametric":
     left_keys = [
         ["1","2","3","+","−"],
@@ -144,7 +226,8 @@ cols = st.columns([3,2])
 for row in left_keys:
     row_cols = cols[0].columns(len(row))
     for i, key in enumerate(row):
-        row_cols[i].button(key, on_click=insert_key, args=(key,), use_container_width=True)
+        display_key = "＋" if key == "+" else key  # fix plus sign
+        row_cols[i].button(display_key, on_click=insert_key, args=(key,), use_container_width=True)
 for row in right_keys:
     row_cols = cols[1].columns(len(row))
     for i, key in enumerate(row):
@@ -184,6 +267,36 @@ def to_latex(expr: str) -> str:
     expr = re.sub(r"\b(sin|cos|tan|sec|csc|cot|ln|exp)\b", r"\\\1", expr)
     return expr
 
+# ======================================================
+# NEW STEP-BY-STEP CHECKER (ADDED, NOT REPLACING)
+# ======================================================
+def check_steps_against_expected(student_steps, expected_steps):
+    feedback = []
+
+    for i, step in enumerate(student_steps):
+        try:
+            step_expr = parse_expr_safe(step)
+        except Exception:
+            feedback.append(f"Step {i+1}: ❌ Invalid expression")
+            continue
+
+        if i >= len(expected_steps):
+            feedback.append(f"Step {i+1}: ℹ️ Extra step (not required)")
+            continue
+
+        expected_expr = expected_steps[i]["expr"]
+
+        if simplify(step_expr - expected_expr) == 0:
+            feedback.append(f"Step {i+1}: ✅ Correct")
+        else:
+            feedback.append(
+                f"Step {i+1}: ❌ Incorrect. Correction: {sp.latex(expected_expr)}"
+            )
+
+    if len(student_steps) < len(expected_steps):
+        feedback.append("⚠️ Some expected steps are missing.")
+
+    return feedback
 # ----------------- CHECK BUTTON ----------------- #
 st.divider()
 if st.button("✅ Check Steps"):
@@ -196,37 +309,71 @@ if st.button("✅ Check Steps"):
 
     steps_lines = [l.strip() for l in st.session_state.steps.splitlines() if l.strip()]
 
+    # ---------------- PROCESS STEPS ---------------- #
     if st.session_state.mode=="Parametric":
+        t = sp.symbols('t')
         x_expr = parse_expr_safe(to_backend(st.session_state.x_t))
         y_expr = parse_expr_safe(to_backend(st.session_state.y_t))
-        results = check_derivative_steps(
-            student_steps=steps_lines,
-            original_func=None,
-            mode="Parametric",
-            parametric_inputs=(x_expr, y_expr)
+
+        dx_dt = sp.diff(x_expr, t)
+        dy_dt = sp.diff(y_expr, t)
+        dy_dx = sp.simplify(dy_dt / dx_dt)
+
+        expected_steps = [
+            {"label": "dx/dt", "expr": dx_dt, "display": r"\frac{dx}{dt} = " + sp.latex(dx_dt)},
+            {"label": "dy/dt", "expr": dy_dt, "display": r"\frac{dy}{dt} = " + sp.latex(dy_dt)},
+            {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
+        ]
+
+        results = check_steps_against_expected(
+           student_steps=steps_lines,
+           expected_steps=expected_steps
         )
+
+
     elif st.session_state.mode=="Implicit":
+        x, y = sp.symbols('x y')
         func_str = st.session_state.func
-        if "=" not in func_str:
-            st.error("Implicit mode expects an equation like: x^2 + y^2 = 25"); st.stop()
         lhs_str, rhs_str = func_str.split("=", 1)
         lhs_expr = parse_expr_safe(to_backend(lhs_str.strip()))
         rhs_expr = parse_expr_safe(to_backend(rhs_str.strip()))
-        results = check_derivative_steps(
+
+        dy_dx_symbol = sp.Symbol('dy/dx')
+        d_lhs = sp.diff(lhs_expr, x) + sp.diff(lhs_expr, y) * dy_dx_symbol
+        d_rhs = sp.diff(rhs_expr, x) + sp.diff(rhs_expr, y) * dy_dx_symbol
+
+        sol = sp.solve(sp.Eq(d_lhs, d_rhs), dy_dx_symbol)
+        dy_dx = sp.simplify(sol[0]) if sol else None
+
+        expected_steps = [
+            {"label": "d/dx(lhs)", "expr": d_lhs, "display": r"\frac{d}{dx}(\text{LHS}) = " + sp.latex(d_lhs)},
+            {"label": "d/dx(rhs)", "expr": d_rhs, "display": r"\frac{d}{dx}(\text{RHS}) = " + sp.latex(d_rhs)},
+        ]
+        if dy_dx is not None:
+            expected_steps.append({"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)})
+
+        results = check_steps_against_expected(
             student_steps=steps_lines,
-            original_func=(lhs_expr, rhs_expr),
-            mode="Implicit"
-        )
-    else:
-        # Normal mode
+            expected_steps=expected_steps
+        )  
+
+        
+
+    else:  # Normal
+        x = sp.symbols('x')
         func_expr = parse_expr_safe(to_backend(st.session_state.func))
-        results = check_derivative_steps(
-            student_steps=steps_lines,
-            original_func=func_expr,
-            mode="Normal"
+        dfx = sp.simplify(sp.diff(func_expr, x))
+        expected_steps = [
+            {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
+        ]
+
+        results = check_steps_against_expected(
+           student_steps=steps_lines,
+           expected_steps=expected_steps
         )
 
-    # Preview
+
+    # ---------------- PREVIEW ---------------- #
     st.markdown("### 👀 Preview")
     if st.session_state.mode=="Parametric":
         st.latex("x(t) = " + to_latex(st.session_state.x_t))
@@ -236,17 +383,27 @@ if st.button("✅ Check Steps"):
     for line in st.session_state.steps.splitlines():
         st.latex(to_latex(line))
 
-    # Feedback
+    # ---------------- FEEDBACK ---------------- #
     st.markdown("## 📋 Feedback")
+    completeness_feedback = analyze_steps(steps_lines, expected_steps)
+    results = completeness_feedback + results
+
     for msg in results:
         if "Correction:" in msg:
             user_input, correct = msg.split("Correction:",1)
-            st.markdown("**Your Input:**"); st.latex(to_latex(user_input.strip()))
-            st.markdown("**Correct Answer:**"); st.latex(to_latex(correct.strip()))
+            st.markdown("**Your Input:**")
+            st.latex(to_latex(user_input.strip()))
+            st.markdown("**Correct Answer:**")
+            st.latex(to_latex(correct.strip()))
         else:
             st.write(msg)
 
-    # Save history (unchanged)
+    # ---------------- AUTO-COMPUTED REFERENCE ---------------- #
+    st.markdown("### 🔮 Auto-computed reference")
+    for e in expected_steps:
+        st.latex(e["display"])
+
+    # ---------------- SAVE HISTORY ---------------- #
     st.session_state.history.append({
         "mode": st.session_state.mode,
         "func": st.session_state.func,
@@ -255,6 +412,7 @@ if st.button("✅ Check Steps"):
         "steps": st.session_state.steps,
         "results": results
     })
+    # Keep last 10 entries only
     st.session_state.history = st.session_state.history[-10:]
 
 # ----------------- HISTORY SIDEBAR ----------------- #

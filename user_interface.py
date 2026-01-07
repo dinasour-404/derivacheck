@@ -1,7 +1,12 @@
 import streamlit as st
 import base64
+from streamlit_js_eval import streamlit_js_eval
 
-def set_background(image_file):
+# ---------- Background ----------
+def set_background():
+    theme = st.get_option("theme.base")  # returns "dark" or "light"
+    image_file = "images/background1.jpg" if theme == "dark" else "images/background2.jpg"
+
     with open(image_file, "rb") as f:
         encoded = base64.b64encode(f.read()).decode()
     st.markdown(
@@ -18,92 +23,189 @@ def set_background(image_file):
         unsafe_allow_html=True
     )
 
-def apply_pink_theme():
+
+# ---------- Theme ----------
+def apply_neomath_theme():
     st.markdown("""
-        <style>   
-        /* Background */
-        .main {
-            background-color: #fff0f5; /* soft blush pink */
+        <style>
+        .stApp {
+            background-color: #0f0e1a;  /* deep indigo */
         }
-
-        /* Titles */
+                
+        /* Title box */
         .title-box {
-        background-color: #ffe4ec;
-        border: 3px solid #c2185b;
-        border-radius: 12px;
-        padding: 16px;
-        text-align: center;
-        font-family: 'quicksand';
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #c2185b;
-        margin-bottom: 20px;
-        box-shadow: 2px 2px 8px rgba(194, 24, 91, 0.2);
-        }
-
-        /* Sidebar */
-        .css-1d391kg, .css-1lcbmhc {
-            background-color: #ffe4ec !important;
-            border-left: 4px solid #c2185b;
-        }
-
-        /* Buttons */
-        .stButton button {
-            background-color: #ffc1e3; /* soft pink */
-            color: #4a004a;
-            border: 2px solid #c2185b; /* darker pink border */
-            border-radius: 10px;
+            background-color: #1e1b3a;
+            border: 2px solid #00c8ff;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            font-family: 'Orbitron';
+            font-size: 1.8rem;
             font-weight: bold;
-            min-width: 40px;
-            padding: 8px 16px;
-            margin: 3px;
-            transition: 0.3s;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(0, 200, 255, 0.3);
+            margin-bottom: 20px;
         }
-        .stButton button:hover {
-            background-color: #77C0ff;
-            transform: scale(1.05);
+        
+        /* Banner styling */
+        .banner {
+            width: 100%;
+            background: linear-gradient(90deg, #1e1b3a, #00c8ff);  /* glowing strip */
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 20px 20px;
+            box-shadow: 0 4px 12px rgba(0, 200, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(0, 200, 255, 0.8);
+            margin: 0;
         }
 
         /* Input boxes */
         .stTextInput input, .stTextArea textarea {
-            background-color: #fff5fa;
-            border: 2px solid #c2185b;
+            background-color: #2a2540;
+            border: 1px solid #00c8ff;
             border-radius: 8px;
-            color: #333;
+            color: #ffffff;
+            box-shadow: 0 0 6px rgba(0, 200, 255, 0.2);
         }
 
         /* Divider */
         hr {
-            border: 1px solid #c2185b;
+            border: 1px solid #00c8ff;
+        }
+        
+        /*Cursor colour */
+            input:focus, textarea:focus {
+            caret-color: #ff4da6;         /* cursor color */
+            border-color: #ff4da6;
+            box-shadow: 0 0 0 2px rgba(255, 77, 166, 0.3);
         }
 
-        /* Keyboard buttons */
-        .math-btn button {
-            background-color: #ffd6eb;
-            color: #4a004a;
-            border: 2px solid #c2185b;
-            border-radius: 6px;
-            font-weight: 900px;
-            margin: 2px;
+        /* Wide grid */
+        .keyboard-grid-wide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            padding: 16px;
+            background-color: #1e1b3a;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 200, 255, 0.1);
         }
+
+        /* Compact grid */
+        .keyboard-grid-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 6px;
+            padding: 12px;
+            background-color: #1e1b3a;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 200, 255, 0.1);
+        }
+
+        /* Button styling */
+        .math-btn button {
+            background-color: #3f2b63;
+            color: #ffffff;
+            border: 2px solid #00c8ff;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 10px;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+        }
+                
+        /* Radio button container */
+        .stRadio > div {
+            background-color: transparent;
+            color: #00c8ff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 1rem;
+            text-shadow: 0 0 4px rgba(0, 200, 255, 0.5);
+        }
+
+        /* Radio options */
+        .stRadio div[role="radiogroup"] > label {
+            background-color: #1e1b3a;
+            border: 2px solid #00c8ff;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin: 4px;
+            color: #ffffff;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 6px rgba(0, 200, 255, 0.2);
+        }   
+
+        /* Hover effect */
+            .stRadio div[role="radiogroup"] > label:hover {
+            background-color: #00c8ff;
+            color: #1e1b3a;
+            transform: scale(1.03);
+        }
+
+        /* Selected option */
+        .stRadio div[role="radiogroup"] > label[data-selected="true"] {
+            background-color: #00c8ff;
+            color: #1e1b3a;
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.4);
+        }
+
         .math-btn button:hover {
-            background-color: #f8a8d6;
-            color: white;
+            background-color: #00c8ff;
+            color: #1e1b3a;
+            transform: scale(1.05);
         }
         </style>
     """, unsafe_allow_html=True)
 
+# ---------- Keyboard ----------
 def render_math_keyboard():
     keyboard = [
-        ["7", "8", "9", "+", "−", "a²", "aᵇ", "x", "t"],
+        ["7", "8", "9", "+", "−", "aᵇ", "x", "t"],
         ["4", "5", "6", "×", "÷", "(", ")", "y"],
         ["1", "2", "3", ".", "π", "sin(", "cos(", "tan("],
         ["0", "d/dx", "dy/dx", "sqrt(", "=", "sec(", "ln(", "exp("],
-        ["⌫", "Clear"]
+        ["🔙", "🧹 Clear"]
     ]
 
+    # Detect screen width
+    width = streamlit_js_eval(js_expressions="screen.width", key="get_width")
+    if width is None:
+        width = 1200
+
+    grid_class = "keyboard-grid-compact" if width < 800 else "keyboard-grid-wide"
+
+    st.markdown(f'<div class="{grid_class}">', unsafe_allow_html=True)
+
+    # Render each row of keys
     for row in keyboard:
         cols = st.columns(len(row))
         for i, key in enumerate(row):
-            if key:
-                cols[i].button(key, key=f"{key}_{i}", use_container_width=True)
+            if cols[i].button(key, key=f"{key}_{i}"):
+                st.session_state["last_key"] = key  # store pressed key
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------- App ----------
+def main():
+    apply_neomath_theme()
+    # Banner with title
+    st.markdown(
+        '<div class="banner"><h1 class="banner-title">DerivaCheck</h1></div>',
+        unsafe_allow_html=True
+    )
+    
+    render_math_keyboard()
+
+if __name__ == "__main__":
+    main()

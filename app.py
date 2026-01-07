@@ -293,10 +293,10 @@ if st.button("✅ Check Steps"):
             {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
         ]
 
-       results = check_steps_against_expected(
+        results = check_steps_against_expected(
            student_steps=steps_lines,
            expected_steps=expected_steps
-       )
+        )
 
 
     elif st.session_state.mode=="Implicit":

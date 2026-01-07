@@ -1,7 +1,13 @@
 import streamlit as st
 import sympy as sp
 import re
-from step_checker import check_derivative_steps, parse_expr_safe, analyze_steps
+from step_checker import (
+    check_derivative_steps,          # old one (still exists)
+    check_steps_against_expected,    # ✅ NEW one
+    parse_expr_safe,
+    analyze_steps
+)
+
 from user_interface import apply_pink_theme, render_math_keyboard,set_background
 
 # Apply theme at the start 
@@ -287,12 +293,11 @@ if st.button("✅ Check Steps"):
             {"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)},
         ]
 
-        results = check_derivative_steps(
-            student_steps=steps_lines,
-            original_func=None,
-            mode="Parametric",
-            parametric_inputs=(x_expr, y_expr)
-        )
+       results = check_steps_against_expected(
+           student_steps=steps_lines,
+           expected_steps=expected_steps
+       )
+
 
     elif st.session_state.mode=="Implicit":
         x, y = sp.symbols('x y')
@@ -315,11 +320,12 @@ if st.button("✅ Check Steps"):
         if dy_dx is not None:
             expected_steps.append({"label": "dy/dx", "expr": dy_dx, "display": r"\frac{dy}{dx} = " + sp.latex(dy_dx)})
 
-        results = check_derivative_steps(
+        results = check_steps_against_expected(
             student_steps=steps_lines,
-            original_func=(lhs_expr, rhs_expr),
-            mode="Implicit"
-        )
+            expected_steps=expected_steps
+        )  
+
+        
 
     else:  # Normal
         x = sp.symbols('x')
@@ -329,11 +335,11 @@ if st.button("✅ Check Steps"):
             {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
         ]
 
-        results = check_derivative_steps(
-            student_steps=steps_lines,
-            original_func=func_expr,
-            mode="Normal"
-        )
+       results = check_steps_against_expected(
+           student_steps=steps_lines,
+           expected_steps=expected_steps
+       )
+
 
     # ---------------- PREVIEW ---------------- #
     st.markdown("### 👀 Preview")

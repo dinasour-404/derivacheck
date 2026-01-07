@@ -1,4 +1,5 @@
 import streamlit as st
+import sympy as sp
 import re
 import sympy as sp
 from sympy import simplify
@@ -8,6 +9,55 @@ from user_interface import apply_neomath_theme, render_math_keyboard,set_backgro
 # Apply theme at the start 
 apply_neomath_theme()
 set_background()
+
+# 🔧 UI / CSS FIX: math buttons visible + grey placeholders + white inputs
+st.markdown("""
+<style>
+/* 1️⃣ Make math keyboard symbols visible (especially +) */
+.stButton button,
+.stButton button span {
+    color: black !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+/* 2️⃣ Input boxes: white background */
+input, textarea {
+    background-color: white !important;
+    color: black !important;
+}
+
+/* 3️⃣ Placeholder text: grey and italic */
+input::placeholder,
+textarea::placeholder {
+    color: #888888 !important;   /* grey */
+    opacity: 1 !important;        /* fully visible */
+    font-style: italic;
+}
+
+/* 4️⃣ Cursor colour */
+input:focus, textarea:focus {
+    caret-color: #ff4da6;         /* cursor color */
+    border-color: #ff4da6;
+    box-shadow: 0 0 0 2px rgba(255, 77, 166, 0.3);
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+
+<script>
+document.addEventListener("click", () => {
+  const active = document.activeElement;
+  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+    active.onkeyup = () => { window.streamlitCursorPos = active.selectionStart; };
+    active.onclick = () => { window.streamlitCursorPos = active.selectionStart; };
+  }
+});
+</script>
+""", unsafe_allow_html=True)
+
 
 # ----------------- PAGE CONFIG ----------------- #
 st.set_page_config(page_title="DerivaCheck", layout="wide")
@@ -65,6 +115,10 @@ defaults = {
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
+        
+if "cursor_pos" not in st.session_state:
+    st.session_state.cursor_pos = 0
+
 
 # ----------------- MODE SELECTION ----------------- #
 st.divider()
@@ -120,29 +174,46 @@ def get_placeholders():
 # Get current placeholders
 placeholders = get_placeholders()
 
-# Function Input Section
-st.divider()
 if st.session_state.mode in ["Normal", "Implicit"]:
-    st.markdown('<span class="section-label">Enter Function / Equation:</span>', unsafe_allow_html=True)
     st.text_input(
-        label=" ",
+        "Enter Function / Equation:",
         key="func",
-        placeholder=placeholders.get("func", ""),
-        label_visibility="collapsed"   # removes extra gap
+        placeholder=placeholders.get("func", "")
     )
 else:
     st.info("💡 In parametric differentiation, you need both dx/dt and dy/dt. Enter them step by step!")
-    st.markdown('<span class="section-label">x(t):</span>', unsafe_allow_html=True)
-    st.text_input(" ", key="x_t", placeholder=placeholders.get("x_t", ""), label_visibility="collapsed")
-    st.markdown('<span class="section-label">y(t):</span>', unsafe_allow_html=True)
-    st.text_input(" ", key="y_t", placeholder=placeholders.get("y_t", ""), label_visibility="collapsed")
+    st.text_input(
+        "x(t) =",
+        key="x_t",
+        placeholder=placeholders.get("x_t", "")
+    )
+    st.text_input(
+        "y(t) =",
+        key="y_t",
+        placeholder=placeholders.get("y_t", "")
+    )
 
-# Steps Input Section
-st.markdown('<span class="section-label">Working steps (one per line):</span>', unsafe_allow_html=True)
-st.text_area(" ", key="steps", placeholder=placeholders.get("steps", ""), height=160, label_visibility="collapsed")
+st.text_area(
+    "Working steps (one per line):",
+    key="steps",
+    height=160,
+    placeholder=placeholders.get("steps", "")
+)
 
 # ----------------- KEYBOARD ----------------- #
 st.markdown("### 🔢 Math Keyboard")
+
+cursor_pos = st.components.v1.html("""
+<script>
+const pos = window.streamlitCursorPos ?? 0;
+window.parent.postMessage(
+  { type: "streamlit:setCursor", value: pos },
+  "*"
+);
+</script>
+""", height=0)
+
+
 if st.session_state.mode == "Parametric":
     left_keys = [
         ["1","2","3","+","−"],
@@ -219,8 +290,11 @@ def insert_key(key):
         st.session_state[target] = st.session_state[target][:-1]
         return
 
-    # Default insertion
-    st.session_state[target] += key
+    # Default insertion at cursor
+    pos = st.session_state.get("cursor_pos", len(st.session_state[target]))
+    st.session_state[target] = st.session_state[target][:pos] + key + st.session_state[target][pos:]
+    st.session_state["cursor_pos"] = pos + len(key)
+
 
 cols = st.columns([3,2])
 for row in left_keys:
@@ -301,11 +375,14 @@ def check_steps_against_expected(student_steps, expected_steps):
 st.divider()
 if st.button("✅ Check Steps"):
     if st.session_state.mode in ["Normal","Implicit"] and not st.session_state.func.strip():
-        st.error("Please enter a function/equation"); st.stop()
+        st.error("Please enter a function/equation")
+        st.stop()
     if st.session_state.mode=="Parametric" and (not st.session_state.x_t.strip() or not st.session_state.y_t.strip()):
-        st.error("Please enter both x(t) and y(t)"); st.stop()
+        st.error("Please enter both x(t) and y(t)")
+        st.stop()
     if not st.session_state.steps.strip():
-        st.error("Please enter your steps"); st.stop()
+        st.error("Please enter your steps")
+        st.stop()
 
     steps_lines = [l.strip() for l in st.session_state.steps.splitlines() if l.strip()]
 

@@ -187,4 +187,9 @@ def check_steps_against_expected(student_steps, expected_steps):
     if len(student_steps) < len(expected_steps):
         feedback.append("⚠️ Some expected steps are missing.")
 
+<<<<<<< HEAD
     return feedback
+=======
+    return feedback
+
+>>>>>>> 820f232762bb620d85d858db42230e851460777b

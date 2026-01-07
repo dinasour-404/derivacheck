@@ -163,27 +163,26 @@ def check_derivative_steps(student_steps, original_func=None, mode="Normal", par
 
 def check_steps_against_expected(student_steps, expected_steps):
     feedback = []
+    max_len = max(len(student_steps), len(expected_steps))
 
-    for i, step in enumerate(student_steps):
-        try:
-            step_expr = parse_expr_safe(step)
-        except Exception:
-            feedback.append(f"Step {i+1}: ❌ Invalid expression")
-            continue
+    for i in range(max_len):
+        student = student_steps[i] if i < len(student_steps) else None
+        expected = expected_steps[i]["expr"] if i < len(expected_steps) else None
+        expected_display = expected_steps[i]["display"] if i < len(expected_steps) else None
 
-        if i >= len(expected_steps):
-            feedback.append(f"Step {i+1}: ℹ️ Extra step (not required)")
-            continue
+        if student and expected:
+            try:
+                # Parse both into Sympy expressions for math equivalence
+                student_expr = parse_expr_safe(to_backend(student))
+                if sp.simplify(student_expr - expected) == 0:
+                    feedback.append(f"✅ Step {i+1} correct: {student}")
+                else:
+                    feedback.append(f"❌ Step {i+1} incorrect.\nYour Input: {student}\nExpected: {expected_display}")
+            except Exception:
+                feedback.append(f"⚠️ Step {i+1} could not be parsed: {student}")
+        elif student and not expected:
+            feedback.append(f"⚠️ Extra step {i+1}: {student}")
+        elif expected and not student:
+            feedback.append(f"❌ Missing step {i+1}: Expected {expected_display}")
 
-        expected_expr = expected_steps[i]["expr"]
-
-        if simplify(step_expr - expected_expr) == 0:
-            feedback.append(f"Step {i+1}: ✅ Correct")
-        else:
-            feedback.append(
-                f"Step {i+1}: ❌ Incorrect. Correction: {sp.latex(expected_expr)}"
-            )
-
-    if len(student_steps) < len(expected_steps):
-        feedback.append("⚠️ Some expected steps are missing.")
     return feedback

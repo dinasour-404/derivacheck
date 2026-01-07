@@ -335,10 +335,10 @@ if st.button("✅ Check Steps"):
             {"label": "d/dx", "expr": dfx, "display": r"\frac{d}{dx} = " + sp.latex(dfx)},
         ]
 
-       results = check_steps_against_expected(
+        results = check_steps_against_expected(
            student_steps=steps_lines,
            expected_steps=expected_steps
-       )
+        )
 
 
     # ---------------- PREVIEW ---------------- #

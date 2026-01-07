@@ -39,11 +39,21 @@ textarea::placeholder {
     font-style: italic;
 }
 
+/* cursor colour
 input:focus, textarea:focus {
     caret-color: #ff4da6;
     border-color: #ff4da6;
     box-shadow: 0 0 0 2px rgba(255, 77, 166, 0.3);
 }
+
+/*typing between letter
+document.addEventListener("click", () => {
+  const active = document.activeElement;
+  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+    active.onkeyup = () => { window.streamlitCursorPos = active.selectionStart; };
+    active.onclick = () => { window.streamlitCursorPos = active.selectionStart; };
+  }
+});
 
 </style>
 """, unsafe_allow_html=True)
@@ -68,6 +78,13 @@ defaults = {
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
+        
+if "cursor_pos" not in st.session_state:
+    st.session_state.cursor_pos = 0
+
+if "cursor_pos" not in st.session_state:
+    st.session_state.cursor_pos = 0
+
 
 # ----------------- MODE SELECTION ----------------- #
 st.radio(
@@ -146,6 +163,17 @@ st.text_area(
 # ----------------- KEYBOARD ----------------- #
 st.markdown("### 🔢 Math Keyboard")
 
+cursor_pos = st.components.v1.html("""
+<script>
+const pos = window.streamlitCursorPos ?? 0;
+window.parent.postMessage(
+  { type: "streamlit:setCursor", value: pos },
+  "*"
+);
+</script>
+""", height=0)
+
+
 if st.session_state.mode == "Parametric":
     left_keys = [
         ["1","2","3","+","−"],
@@ -222,8 +250,11 @@ def insert_key(key):
         st.session_state[target] = st.session_state[target][:-1]
         return
 
-    # Default insertion
-    st.session_state[target] += key
+    # Default insertion at cursor
+    pos = st.session_state.get("cursor_pos", len(st.session_state[target]))
+    st.session_state[target] = st.session_state[target][:pos] + key + st.session_state[target][pos:]
+    st.session_state["cursor_pos"] = pos + len(key)
+
 
 cols = st.columns([3,2])
 for row in left_keys:

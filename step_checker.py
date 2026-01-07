@@ -157,3 +157,35 @@ def check_derivative_steps(student_steps, original_func=None, mode="Normal", par
 
     return feedback
 
+# ======================================================
+# NEW STEP-BY-STEP CHECKER (ADDED, NOT REPLACING)
+# ======================================================
+
+def check_steps_against_expected(student_steps, expected_steps):
+    feedback = []
+
+    for i, step in enumerate(student_steps):
+        try:
+            step_expr = parse_expr_safe(step)
+        except Exception:
+            feedback.append(f"Step {i+1}: ❌ Invalid expression")
+            continue
+
+        if i >= len(expected_steps):
+            feedback.append(f"Step {i+1}: ℹ️ Extra step (not required)")
+            continue
+
+        expected_expr = expected_steps[i]["expr"]
+
+        if simplify(step_expr - expected_expr) == 0:
+            feedback.append(f"Step {i+1}: ✅ Correct")
+        else:
+            feedback.append(
+                f"Step {i+1}: ❌ Incorrect. Correction: {sp.latex(expected_expr)}"
+            )
+
+    if len(student_steps) < len(expected_steps):
+        feedback.append("⚠️ Some expected steps are missing.")
+
+    return feedback
+

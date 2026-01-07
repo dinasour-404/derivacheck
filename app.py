@@ -10,55 +10,6 @@ from user_interface import apply_neomath_theme, render_math_keyboard,set_backgro
 apply_neomath_theme()
 set_background()
 
-# 🔧 UI / CSS FIX: math buttons visible + grey placeholders + white inputs
-st.markdown("""
-<style>
-/* 1️⃣ Make math keyboard symbols visible (especially +) */
-.stButton button,
-.stButton button span {
-    color: black !important;
-    font-weight: 700 !important;
-    opacity: 1 !important;
-}
-
-/* 2️⃣ Input boxes: white background */
-input, textarea {
-    background-color: white !important;
-    color: black !important;
-}
-
-/* 3️⃣ Placeholder text: grey and italic */
-input::placeholder,
-textarea::placeholder {
-    color: #888888 !important;   /* grey */
-    opacity: 1 !important;        /* fully visible */
-    font-style: italic;
-}
-
-/* 4️⃣ Cursor colour */
-input:focus, textarea:focus {
-    caret-color: #ff4da6;         /* cursor color */
-    border-color: #ff4da6;
-    box-shadow: 0 0 0 2px rgba(255, 77, 166, 0.3);
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-
-<script>
-document.addEventListener("click", () => {
-  const active = document.activeElement;
-  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
-    active.onkeyup = () => { window.streamlitCursorPos = active.selectionStart; };
-    active.onclick = () => { window.streamlitCursorPos = active.selectionStart; };
-  }
-});
-</script>
-""", unsafe_allow_html=True)
-
-
 # ----------------- PAGE CONFIG ----------------- #
 st.set_page_config(page_title="DerivaCheck", layout="wide")
 st.markdown(

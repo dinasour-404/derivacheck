@@ -31,11 +31,12 @@ if st.session_state.show_tutorial:
 
     st.markdown("### Step 2: Enter Your Function or Equation")
     st.markdown("For example: `2x³ + 3x`")
+    st.info("REMINDER!! Use the input button to change the keyboard usage for input box.")
 
     st.markdown("### Step 3: Add Your Working Steps")
     st.markdown("Write each of your working step on a new line.")
 
-    st.markdown("### Step 4: Use the Math Keyboard")
+    st.markdown("### Step 4: Use the Math Keyboard (Recommended)")
     st.markdown("Tap buttons to insert symbols like `d/dx` or powers.")
 
     st.markdown("### Step 5: Press ✅ Check Steps")

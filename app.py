@@ -3,8 +3,10 @@ import sympy as sp
 import re
 import sympy as sp
 from sympy import simplify
-from step_checker import check_derivative_steps, check_steps_against_expected, parse_expr_safe, analyze_steps
+from step_checker import check_derivative_steps, check_steps_against_expected, parse_expr_safe, to_backend, to_latex, parse_expr_safe
 from user_interface import apply_neomath_theme, render_math_keyboard,set_background
+from step_explanations import STEP_EXPLANATIONS
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 # Apply theme at the start 
 apply_neomath_theme()
@@ -260,69 +262,6 @@ for row in right_keys:
         if key is not None:
             row_cols[i].button(key, on_click=insert_key, args=(key,), use_container_width=True)
 
-import re
-from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
-
-# ----------------- BACKEND HELPERS ----------------- #
-def to_backend(expr: str) -> str:
-    if not expr:
-        return ""
-    # Superscripts → Python power notation
-    expr = expr.replace("⁰","**0").replace("¹","**1").replace("²","**2") \
-               .replace("³","**3").replace("⁴","**4").replace("⁵","**5") \
-               .replace("⁶","**6").replace("⁷","**7").replace("⁸","**8") \
-               .replace("⁹","**9")
-    # Replace math symbols
-    expr = expr.replace("−","-").replace("×","*").replace("÷","/")
-    return expr
-
-def parse_expr_safe(expr: str):
-    try:
-        # Allow implicit multiplication (e.g., 4x → 4*x, 2(x+1) → 2*(x+1))
-        transformations = (standard_transformations + (implicit_multiplication_application,))
-        return parse_expr(expr, transformations=transformations)
-    except Exception as e:
-        raise e
-
-def to_latex(expr: str) -> str:
-    if not expr:
-        return ""
-    expr = expr.replace("**","^").replace("*","")
-    expr = expr.replace("d/dx", r"\frac{d}{dx} ")
-    expr = expr.replace("dy/dx", r"\frac{dy}{dx}")
-    expr = re.sub(r"\b(sin|cos|tan|sec|csc|cot|ln|exp)\b", r"\\\1", expr)
-    return expr
-
-# ======================================================
-# NEW STEP-BY-STEP CHECKER (ADDED, NOT REPLACING)
-# ======================================================
-def check_steps_against_expected(student_steps, expected_steps):
-    feedback = []
-
-    for i, step in enumerate(student_steps):
-        try:
-            step_expr = parse_expr_safe(step)
-        except Exception:
-            feedback.append(f"Step {i+1}: ❌ Invalid expression")
-            continue
-
-        if i >= len(expected_steps):
-            feedback.append(f"Step {i+1}: ℹ️ Extra step (not required)")
-            continue
-
-        expected_expr = expected_steps[i]["expr"]
-
-        if simplify(step_expr - expected_expr) == 0:
-            feedback.append(f"Step {i+1}: ✅ Correct")
-        else:
-            feedback.append(
-                f"Step {i+1}: ❌ Incorrect. Correction: {sp.latex(expected_expr)}"
-            )
-
-    if len(student_steps) < len(expected_steps):
-        feedback.append("⚠️ Some expected steps are missing.")
-
-    return feedback
 # ----------------- CHECK BUTTON ----------------- #
 st.divider()
 if st.button("✅ Check Steps"):
@@ -386,8 +325,6 @@ if st.button("✅ Check Steps"):
             expected_steps=expected_steps
         )  
 
-        
-
     else:  # Normal
         x = sp.symbols('x')
         func_expr = parse_expr_safe(to_backend(st.session_state.func))
@@ -401,7 +338,6 @@ if st.button("✅ Check Steps"):
            expected_steps=expected_steps
         )
 
-
     # ---------------- PREVIEW ---------------- #
     st.markdown("### 👀 Preview")
     if st.session_state.mode=="Parametric":
@@ -414,8 +350,8 @@ if st.button("✅ Check Steps"):
 
     # ---------------- FEEDBACK ---------------- #
     st.markdown("## 📋 Feedback")
-    completeness_feedback = analyze_steps(steps_lines, expected_steps)
-    results = completeness_feedback + results
+    completeness_feedback = check_steps_against_expected(steps_lines, expected_steps)
+    results = completeness_feedback
 
     for msg in results:
         if "Correction:" in msg:

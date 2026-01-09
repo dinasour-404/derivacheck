@@ -354,7 +354,7 @@ if st.button("✅ Check Steps"):
     results = completeness_feedback
 
     for msg in results:
-        if "Correction:" in msg:
+        if msg and "Correction:" in msg:
             user_input, correct = msg.split("Correction:",1)
             st.markdown("**Your Input:**")
             st.latex(to_latex(user_input.strip()))

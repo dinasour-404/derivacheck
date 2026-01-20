@@ -185,4 +185,8 @@ def check_steps_against_expected(student_steps, expected_steps):
         elif expected and not student:
             feedback.append(st.write(f"❌ Missing step {i+1} \nCorrection: {expected_display}"))
 
+<<<<<<< HEAD
     return feedback
+=======
+    return feedback
+>>>>>>> e7d1cfb73026eb79f22c7334f5e52854f573ed0f

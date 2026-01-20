@@ -115,4 +115,8 @@ STEP_EXPLANATIONS = {
         "textbook": "Check: (u/v)' = (u'·v − u·v') / v²"
     },
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e7d1cfb73026eb79f22c7334f5e52854f573ed0f
